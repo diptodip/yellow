@@ -12,10 +12,16 @@ typedef struct {
 	f64 z;
 } Vec3D;
 
+
 typedef Vec3D Point3D;
 
 f64 dot(Vec3D *a, Vec3D *b) {
 	return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
+Vec3D cross(Vec3D *a, Vec3D *b) {
+	Vec3D v = {};
+	return v;
 }
 
 f64 length_squared(Vec3D *a) {
@@ -57,6 +63,20 @@ typedef struct {
 	Point3D origin;
 	Vec3D normal;
 } Intersection;
+
+typedef struct {
+	Point3D ray_origin;
+	Point3D sensor_origin;
+	Vec3D normal;
+	Vec3D up;
+	u32 height;
+	u32 width;
+} Camera;
+
+Ray prime_ray(Camera *camera, u32 row, u32 col) {
+	f32 row_frac = (f32) row / (f32) height;
+	f32 col_frac = (f32) row / (f32) width;
+}
 
 // TODO(dip): implement struct of arrays to hold intersection information
 // TODO(dip): implement ray tracing algorithm

@@ -1,26 +1,29 @@
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 
 #include "types.h"
 #include "stretchy_buffer.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-typedef struct {
+struct Vec3D {
 	f64 x;
 	f64 y;
 	f64 z;
-} Vec3D;
+};
 
-
-typedef Vec3D Point3D;
+using Point3D = Vec3D;
 
 f64 dot(Vec3D *a, Vec3D *b) {
 	return a->x * b->x + a->y * b->y + a->z * b->z;
 }
 
 Vec3D cross(Vec3D *a, Vec3D *b) {
-	Vec3D v = {};
+	Vec3D v = {
+		a->y * b->z - a->z * b->z,
+		a->z * b->x - a->x * b->z,
+		a->x * b->y - a->y * b->x
+	};
 	return v;
 }
 
@@ -29,7 +32,7 @@ f64 length_squared(Vec3D *a) {
 }
 
 f64 length(Vec3D *a) {
-	return sqrt(length_squared(a));
+	return std::sqrt(length_squared(a));
 }
 
 Vec3D normalize(Vec3D *a) {
@@ -38,44 +41,45 @@ Vec3D normalize(Vec3D *a) {
 	return a_normed;
 }
 
-typedef struct {
+struct Material {
 	u32 color;
 	f64 scatter_index;
 	f64 refractive_index;
-} Material;
+};
 
-typedef struct {
+struct Sphere {
 	Point3D origin;
 	f64 radius;
 	Material material;
-} Sphere;
+};
 
-typedef struct {
+struct Ray {
 	Point3D origin;
 	Vec3D direction;
-} Ray;
+};
 
-typedef union {
+union Traceable {
 	Sphere s;
-} Traceable;
+};
 
-typedef struct {
+struct Intersection {
 	Point3D origin;
 	Vec3D normal;
-} Intersection;
+};
 
-typedef struct {
+struct Camera {
 	Point3D ray_origin;
 	Point3D sensor_origin;
 	Vec3D normal;
 	Vec3D up;
 	u32 height;
 	u32 width;
-} Camera;
+};
 
 Ray prime_ray(Camera *camera, u32 row, u32 col) {
-	f32 row_frac = (f32) row / (f32) height;
-	f32 col_frac = (f32) row / (f32) width;
+	f32 row_frac = (f32) row / (f32) camera->height;
+	f32 col_frac = (f32) row / (f32) camera->width;
+	return Ray {};
 }
 
 // TODO(dip): implement struct of arrays to hold intersection information
@@ -92,18 +96,18 @@ int main(int argc, char **args) {
 			.refractive_index=1.5,
 		},
 	};
-	printf("m scatter is %.2f\n", s.material.scatter_index);
-	printf("m refractive is %.2f\n", s.material.refractive_index);
+	std::printf("m scatter is %.2f\n", s.material.scatter_index);
+	std::printf("m refractive is %.2f\n", s.material.refractive_index);
 	Vec3D v = {10, 5, 7.5};
 	f64 l = length(&v);
 	Vec3D normalized_v = normalize(&v);
-	printf("v is %.2f %.2f %.2f\n", v.x, v.y, v.z);
-	printf("length is %.2f\n", l);
-	printf("normalized v is %.2f %.2f %.2f\n", normalized_v.x, normalized_v.y, normalized_v.z);
-	u32 *image = malloc(sizeof(u32) * 100 * 100);
+	std::printf("v is %.2f %.2f %.2f\n", v.x, v.y, v.z);
+	std::printf("length is %.2f\n", l);
+	std::printf("normalized v is %.2f %.2f %.2f\n", normalized_v.x, normalized_v.y, normalized_v.z);
+	u32 *image = (u32*) malloc(sizeof(u32) * 100 * 100);
 	u32 *out = image;
-	for (i32 i = 0; i < 100; i++) {
-		for (i32 j = 0; j < 100; j++) {
+	for (u32 i = 0; i < 100; i++) {
+		for (u32 j = 0; j < 100; j++) {
 			*out++ = (i < 32) ? 0xFF0000FF : 0xFFFF0000;
 		}
 	}

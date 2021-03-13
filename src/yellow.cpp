@@ -34,16 +34,16 @@ Vec3D cross(Vec3D *a, Vec3D *b) {
 	return v;
 }
 
-f64 l2_norm(Vec3D *a) {
+f64 l2_norm_squared(Vec3D *a) {
 	return dot(a, a);
 }
 
-f64 length(Vec3D *a) {
-	return std::sqrt(l2_norm(a));
+f64 l2_norm(Vec3D *a) {
+	return std::sqrt(l2_norm_squared(a));
 }
 
 Vec3D normalize(Vec3D *a) {
-	f64 norm = length(a);
+	f64 norm = l2_norm(a);
 	Vec3D a_normed = {a->x / norm, a->y / norm, a->z / norm};
 	return a_normed;
 }
@@ -107,10 +107,10 @@ int main(int argc, char **args) {
 	std::printf("m scatter is %.2f\n", s.material.scatter_index);
 	std::printf("m refractive is %.2f\n", s.material.refractive_index);
 	Vec3D v = {10, 5, 7.5};
-	f64 l = length(&v);
+	f64 l = l2_norm(&v);
 	Vec3D normalized_v = normalize(&v);
 	std::printf("v is %.2f %.2f %.2f\n", v.x, v.y, v.z);
-	std::printf("length is %.2f\n", l);
+	std::printf("l2_norm is %.2f\n", l);
 	std::printf("normalized v is %.2f %.2f %.2f\n", normalized_v.x, normalized_v.y, normalized_v.z);
 	u32 *image = (u32*) malloc(sizeof(u32) * 100 * 100);
 	u32 *out = image;

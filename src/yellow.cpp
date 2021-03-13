@@ -1,99 +1,14 @@
 #include <cmath>
 #include <cstdio>
-
-#include "types.h"
 #include "stretchy_buffer.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-
-struct Vec3D {
-	f64 x;
-	f64 y;
-	f64 z;
-};
-
-using Point3D = Vec3D;
-
-struct RGBA {
-	f64 r;
-	f64 g;
-	f64 b;
-	f64 a;
-};
-
-f64 dot(Vec3D *a, Vec3D *b) {
-	return a->x * b->x + a->y * b->y + a->z * b->z;
-}
-
-Vec3D cross(Vec3D *a, Vec3D *b) {
-	Vec3D v = {
-		a->y * b->z - a->z * b->z,
-		a->z * b->x - a->x * b->z,
-		a->x * b->y - a->y * b->x
-	};
-	return v;
-}
-
-f64 l2_norm_squared(Vec3D *a) {
-	return dot(a, a);
-}
-
-f64 l2_norm(Vec3D *a) {
-	return std::sqrt(l2_norm_squared(a));
-}
-
-Vec3D normalize(Vec3D *a) {
-	f64 norm = l2_norm(a);
-	Vec3D a_normed = {a->x / norm, a->y / norm, a->z / norm};
-	return a_normed;
-}
-
-struct Material {
-	RGBA color;
-	f64 scatter_index;
-	f64 refractive_index;
-};
-
-struct Sphere {
-	Point3D origin;
-	f64 radius;
-	Material material;
-};
-
-struct Ray {
-	Point3D origin;
-	Vec3D direction;
-};
-
-union Traceable {
-	Sphere s;
-};
-
-struct Intersection {
-	Point3D origin;
-	Vec3D normal;
-};
-
-struct Camera {
-	Point3D ray_origin;
-	Point3D sensor_origin;
-	Vec3D normal;
-	Vec3D up;
-	u32 height;
-	u32 width;
-};
-
-Ray prime_ray(Camera *camera, u32 row, u32 col) {
-	f32 row_frac = (f32) row / (f32) camera->height;
-	f32 col_frac = (f32) row / (f32) camera->width;
-	Vec3D basis1 = cross(&camera->normal, &camera->up);
-	return Ray {};
-}
-
-// TODO(dip): implement struct of arrays to hold intersection information
-// TODO(dip): implement ray tracing algorithm
-void trace(Ray *r, Traceable *world, Intersection *intersections) {
-}
+#include "types.h"
+#include "linalg.h"
+#include "colors.h"
+#include "materials.h"
+// TODO(dd): Implement include guards in the headers
+// and include them in each other?
 
 int main(int argc, char **args) {
 	Sphere s = {

@@ -34,12 +34,12 @@ Vec3D cross(Vec3D *a, Vec3D *b) {
 	return v;
 }
 
-f64 length_squared(Vec3D *a) {
+f64 l2_norm(Vec3D *a) {
 	return dot(a, a);
 }
 
 f64 length(Vec3D *a) {
-	return std::sqrt(length_squared(a));
+	return std::sqrt(l2_norm(a));
 }
 
 Vec3D normalize(Vec3D *a) {
@@ -49,7 +49,7 @@ Vec3D normalize(Vec3D *a) {
 }
 
 struct Material {
-	u32 color;
+	RGBA color;
 	f64 scatter_index;
 	f64 refractive_index;
 };
@@ -86,6 +86,7 @@ struct Camera {
 Ray prime_ray(Camera *camera, u32 row, u32 col) {
 	f32 row_frac = (f32) row / (f32) camera->height;
 	f32 col_frac = (f32) row / (f32) camera->width;
+	Vec3D basis1 = cross(&camera->normal, &camera->up);
 	return Ray {};
 }
 

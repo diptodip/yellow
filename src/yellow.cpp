@@ -14,6 +14,13 @@ struct Vec3D {
 
 using Point3D = Vec3D;
 
+struct RGBA {
+	f64 r;
+	f64 g;
+	f64 b;
+	f64 a;
+};
+
 f64 dot(Vec3D *a, Vec3D *b) {
 	return a->x * b->x + a->y * b->y + a->z * b->z;
 }
@@ -92,7 +99,7 @@ int main(int argc, char **args) {
 		.origin = (Point3D){0, 0, 0},
 		.radius = 0.5,
 		.material = (Material){
-			.color=0xFF0000FF,
+			.color=(RGBA){1, 0, 0, 1},
 			.refractive_index=1.5,
 		},
 	};

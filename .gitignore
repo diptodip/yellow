@@ -34,3 +34,6 @@
 # Build artifacts
 /targets/*
 *.bmp
+
+# Editor files
+*#*

@@ -13,3 +13,7 @@ Ray prime_ray(Camera *camera, u32 row, u32 col) {
 	Vec3D basis1 = cross(&camera->normal, &camera->up);
 	return Ray {};
 }
+
+u32* imalloc(size_t height, size_t width) {
+	return (u32*) malloc(sizeof(u32) * height * width);
+}

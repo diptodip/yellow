@@ -7,6 +7,8 @@
 #include "linalg.h"
 #include "colors.h"
 #include "materials.h"
+#include "ray.h"
+#include "cameras.h"
 // TODO(dd): Implement include guards in the headers
 // and include them in each other?
 
@@ -27,7 +29,7 @@ int main(int argc, char **args) {
 	std::printf("v is %.2f %.2f %.2f\n", v.x, v.y, v.z);
 	std::printf("l2_norm is %.2f\n", l);
 	std::printf("normalized v is %.2f %.2f %.2f\n", normalized_v.x, normalized_v.y, normalized_v.z);
-	u32 *image = (u32*) malloc(sizeof(u32) * 100 * 100);
+	u32 *image = imalloc(100, 100);
 	u32 *out = image;
 	for (u32 i = 0; i < 100; i++) {
 		for (u32 j = 0; j < 100; j++) {

@@ -1,10 +1,20 @@
+struct ImagePlane {
+	f64 fov;
+	f64 aspect_ratio;
+	f64 pixel_size;
+	f64 height;
+	f64 width;
+	u32 rows;
+	u32 cols;
+};
+
 struct Camera {
-	Point3D ray_origin;
-	Point3D sensor_origin;
+	Point3D origin;
 	Vec3D normal;
 	Vec3D up;
-	u32 height;
-	u32 width;
+	ImagePlane image_plane;
+	f64 aperture;
+	f64 focal_distance;
 };
 
 Ray prime_ray(Camera *camera, u32 row, u32 col) {

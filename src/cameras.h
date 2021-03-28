@@ -17,11 +17,17 @@ struct Camera {
 	f64 focal_distance;
 };
 
-Ray prime_ray(Camera *camera, u32 row, u32 col) {
-	f32 row_frac = (f32) row / (f32) camera->height;
-	f32 col_frac = (f32) row / (f32) camera->width;
-	Vec3D basis1 = cross(&camera->normal, &camera->up);
-	return Ray {};
+ImagePlane create_image_plane(f64 fov, f64 aspect_ratio, u32 pixel_height) {
+	ImagePlane image_plane = {};
+	f64 fov_radians = fov * (M_PI / 180.0);
+	image_plane.fov = fov;
+	image_plane.aspect_ratio = aspect_ratio;
+	image_plane.height = 2.0 * std::tan(fov_radians / 2.0);
+	image_plane.width = aspect_ratio * image_plane.height;
+	image_plane.pixel_size = image_plane.height / (f64) pixel_height;
+	image_plane.rows = (u32) pixel_height;
+	image_plane.cols = (u32) std::round(image_plane.width / image_plane.pixel_size);
+	return image_plane;
 }
 
 Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {

@@ -3,5 +3,5 @@
 cd ~/src/yellow;
 rm -rf targets;
 mkdir targets;
-time clang++ -v -std=c++11 -lm -o targets/yellow src/yellow.cpp;
+time clang++ -Ofast -v -std=c++11 -lm -o targets/yellow src/yellow.cpp;
 time ./targets/yellow;

@@ -7,7 +7,6 @@ struct Material {
 struct Sphere {
 	Point3D origin;
 	f64 radius;
-	Material *material;
 };
 
 union TraceableObject {
@@ -15,10 +14,11 @@ union TraceableObject {
 };
 
 enum TraceableType {
-	Sphere
+	SphereT
 };
 
 struct Traceable {
 	TraceableType type;
 	TraceableObject object;
-}
+	Material material;
+};

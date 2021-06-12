@@ -1,14 +1,15 @@
 #include <cmath>
 #include <cstdio>
 #include <random>
+#include <chrono>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "types.h"
 #include "linalg.h"
 #include "colors.h"
 #include "materials.h"
-#include "ray.h"
 #include "cameras.h"
+#include "ray.h"
 // TODO(dd): implement include guards in the headers
 // and include them in each other?
 
@@ -85,30 +86,7 @@ void test_spheres() {
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
-	u32 *image = imalloc(image_plane.rows, image_plane.cols);
-	u32 *out = image;
-	u32 num_samples = 100;
-	static thread_local std::mt19937 generator;
-	std::uniform_real_distribution<> sample_shift_distribution(0.0, 1.0);
-	printf("[start] processing %dpx x %dpx (width x height)...\n", image_plane.cols, image_plane.rows);
-	for (u32 i = 0; i < image_plane.rows; i++) {
-		printf("[running] %d lines remaining\n", image_plane.rows - i);
-		for (u32 j = 0; j < image_plane.cols; j++) {
-			RGBA color = {0.0, 0.0, 0.0, 1.0};
-			for (u32 s = 0; s < num_samples; s++) {
-				f64 row_rand = sample_shift_distribution(generator);
-				f64 col_rand = sample_shift_distribution(generator);
-				f64 u = ((f64) i + 0.5 + row_rand) / ((f64) image_plane.rows);
-				f64 v = ((f64) j + 0.5 + col_rand) / ((f64) image_plane.cols);
-				Ray ray = prime_ray(&camera, u, v);
-				color += trace(&ray, world, 50);
-			}
-			color = color / (f64) num_samples;
-			u32 color_u32 = rgba_to_u32(&color);
-			*out++ = color_u32;
-		}
-	}
-	stbi_write_bmp("image.bmp", image_plane.cols, image_plane.rows, 4, image);
+	render(world, camera, image_plane.rows, image_plane.cols, 100);
 }
 
 void random_spheres() {
@@ -226,31 +204,14 @@ void random_spheres() {
 	world.push_back(big_glass_traceable);
 	world.push_back(big_diffuse_traceable);
 	world.push_back(big_reflective_traceable);
-	u32 *image = imalloc(image_plane.rows, image_plane.cols);
-	u32 *out = image;
-	u32 num_samples = 100;
-	printf("[start] processing %dpx x %dpx (width x height)...\n", image_plane.cols, image_plane.rows);
-	for (u32 i = 0; i < image_plane.rows; i++) {
-		printf("[running] %d lines remaining\n", image_plane.rows - i);
-		for (u32 j = 0; j < image_plane.cols; j++) {
-			RGBA color = {0.0, 0.0, 0.0, 1.0};
-			for (u32 s = 0; s < num_samples; s++) {
-				f64 row_rand = unit_uniform_distribution(generator);
-				f64 col_rand = unit_uniform_distribution(generator);
-				f64 u = ((f64) i + 0.5 + row_rand) / ((f64) image_plane.rows);
-				f64 v = ((f64) j + 0.5 + col_rand) / ((f64) image_plane.cols);
-				Ray ray = prime_ray(&camera, u, v);
-				color += trace(&ray, world, 50);
-			}
-			color = color / (f64) num_samples;
-			u32 color_u32 = rgba_to_u32(&color);
-			*out++ = color_u32;
-		}
-	}
-	stbi_write_bmp("image.bmp", image_plane.cols, image_plane.rows, 4, image);
+	render(world, camera, image_plane.rows, image_plane.cols, 100);
 }
 
 int main(int argc, char **args) {
+	auto start = std::chrono::high_resolution_clock::now();
 	random_spheres();
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+	printf("[info] scene rendered in %.2ld seconds\n", duration.count());
 	return 0;
 }

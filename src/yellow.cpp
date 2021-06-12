@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 #include <random>
-#include <chrono>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "types.h"
@@ -208,10 +208,10 @@ void random_spheres() {
 }
 
 int main(int argc, char **args) {
-	auto start = std::chrono::high_resolution_clock::now();
+	time_t start = time(NULL);
 	random_spheres();
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
-	printf("[info] scene rendered in %.2ld seconds\n", duration.count());
+	time_t stop = time(NULL);
+	f64 duration = (f64) (stop - start);
+	printf("[info] scene rendered in %.2f seconds\n", duration);
 	return 0;
 }

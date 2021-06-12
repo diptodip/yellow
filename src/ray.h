@@ -3,18 +3,18 @@ struct Ray {
 	Vec3D direction;
 };
 
-Point3D ray_at(Ray *ray, f64 t) {
+inline Point3D ray_at(Ray *ray, f64 t) {
 	return ray->origin + (t * ray->direction);
 }
 
-Ray diffuse_bounce(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
+inline Ray diffuse_bounce(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
 	Vec3D random_direction = normal + random_unit_vector();
 	return (Ray) {off, random_direction};
 }
 
-Ray reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
+inline Ray reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	Vec3D direction = ray->direction;
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
@@ -22,7 +22,7 @@ Ray reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	return (Ray) {off, reflected};
 }
 
-Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f64 scatter_index) {
+inline Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f64 scatter_index) {
 	Vec3D direction = ray->direction;
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
@@ -31,13 +31,13 @@ Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f64 sca
 	return (Ray) {off, fuzzy_reflected};
 }
 
-f64 schlick(f64 cos_theta, f64 refraction_ratio) {
+inline f64 schlick(f64 cos_theta, f64 refraction_ratio) {
 	f64 r0 = (1.0 - refraction_ratio) / (1.0 + refraction_ratio);
 	r0 *= r0;
 	return r0 + (1.0 - r0) * std::pow((1.0 - cos_theta), 5.0);
 }
 
-Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f64 refractive_index) {
+inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f64 refractive_index) {
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
 	f64 refraction_ratio = inside ? refractive_index : (1.0 / refractive_index);
@@ -62,7 +62,7 @@ Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, 
 	return (Ray) {off, refracted};
 }
 
-Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f64 scatter_index) {
+inline Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f64 scatter_index) {
 	if (scatter_index == 1.0) {
 		return diffuse_bounce(ray, normal, off);
 	} else if (scatter_index == 0.0) {
@@ -122,7 +122,7 @@ IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	return result;
 }
 
-Intersections find_intersections(Ray *ray, std::vector<Traceable> world) {
+inline Intersections find_intersections(Ray *ray, std::vector<Traceable> world) {
 	Intersections intersections = {};
 	intersections.nearest_index = 0;
 	f64 nearest_distance = std::numeric_limits<double>::infinity();

@@ -197,3 +197,32 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 	}
 	return color;
 }
+
+void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
+	static thread_local std::mt19937 generator;
+	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
+	u32 *image = imalloc(rows, cols);
+	u32 *out = image;
+	printf("[start] rendering %dpx x %dpx (width x height)\n", cols, rows);
+# pragma omp parallel for schedule(dynamic, 1)
+	for (u32 i = 0; i < rows; i++) {
+		printf("[running] %d lines remaining\n", rows - i);
+		for (u32 j = 0; j < cols; j++) {
+			RGBA color = {0.0, 0.0, 0.0, 1.0};
+			for (u32 s = 0; s < num_samples; s++) {
+				f64 row_rand = unit_uniform_distribution(generator);
+				f64 col_rand = unit_uniform_distribution(generator);
+				f64 u = ((f64) i + 0.5 + row_rand) / ((f64) rows);
+				f64 v = ((f64) j + 0.5 + col_rand) / ((f64) cols);
+				Ray ray = prime_ray(&camera, u, v);
+				color += trace(&ray, world, 50);
+			}
+			color = color / (f64) num_samples;
+			u32 color_u32 = rgba_to_u32(&color);
+			*out++ = color_u32;
+		}
+	}
+	printf("[info] writing image...\n");
+	stbi_write_bmp("image.bmp", cols, rows, 4, image);
+	printf("[ok] done!\n");
+}

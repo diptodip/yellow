@@ -219,7 +219,7 @@ void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32
 			}
 			color = color / (f64) num_samples;
 			u32 color_u32 = rgba_to_u32(&color);
-			*out++ = color_u32;
+			out[i * cols + j] = color_u32;
 		}
 	}
 	printf("[info] writing image...\n");

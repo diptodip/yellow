@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <ctime>
 #include <random>
+#include <time.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 #include "types.h"
@@ -126,48 +127,48 @@ void random_spheres() {
 			Point3D target = {4.0, 0.2, 0.0};
 			Point3D distance = position - target;
 			if (l2_norm(&distance) > 0.9) {
-			    Material material;
-			    Sphere sphere;
-			    Traceable traceable;
-			    if (material_check < 0.8) {
-				    // make diffuse sphere
-				    RGBA random_color = random_opaque_color();
-				    material = {
-					    .color = random_color,
-					    .scatter_index = 1.0,
-					    .refractive_index = 0.0,
-				    };
-				    sphere = {
-					    .origin = position,
-					    .radius = y,
-				    };
-			    } else if (material_check < 0.95) {
-				    // make fuzzy reflective sphere
-				    RGBA random_color = random_opaque_color(0.5, 1.0);
-				    f64 scatter_index = unit_uniform_distribution(generator);
-				    material = {
-					    .color = random_color,
-					    .scatter_index = scatter_index,
-					    .refractive_index = 0.0,
-				    };
-				    sphere = {
-					    .origin = position,
-					    .radius = y,
-				    };
-			    } else {
-				    // make refractive sphere
-				    material = {
-					    .color = (RGBA) {1.0, 1.0, 1.0, 1.0},
-					    .scatter_index = 0.0,
-					    .refractive_index = 1.5,
-				    };
-				    sphere = {
-					    .origin = position,
-					    .radius = y,
-				    };
-			    }
-			    traceable = {SphereT, sphere, material};
-			    world.push_back(traceable);
+				Material material;
+				Sphere sphere;
+				Traceable traceable;
+				if (material_check < 0.8) {
+					// make diffuse sphere
+					RGBA random_color = random_opaque_color();
+					material = {
+					.color = random_color,
+					.scatter_index = 1.0,
+					.refractive_index = 0.0,
+					};
+					sphere = {
+					.origin = position,
+					.radius = y,
+					};
+				} else if (material_check < 0.95) {
+					// make fuzzy reflective sphere
+					RGBA random_color = random_opaque_color(0.5, 1.0);
+					f64 scatter_index = unit_uniform_distribution(generator);
+					material = {
+					.color = random_color,
+					.scatter_index = scatter_index,
+					.refractive_index = 0.0,
+					};
+					sphere = {
+					.origin = position,
+					.radius = y,
+					};
+				} else {
+					// make refractive sphere
+					material = {
+					.color = (RGBA) {1.0, 1.0, 1.0, 1.0},
+					.scatter_index = 0.0,
+					.refractive_index = 1.5,
+					};
+					sphere = {
+					.origin = position,
+					.radius = y,
+					};
+				}
+				traceable = {SphereT, sphere, material};
+				world.push_back(traceable);
 			}
 		}
 	}
@@ -209,9 +210,13 @@ void random_spheres() {
 
 int main(int argc, char **args) {
 	time_t start = time(NULL);
+	clock_t sc = clock();
 	random_spheres();
+	clock_t ec = clock();
 	time_t stop = time(NULL);
 	f64 duration = (f64) (stop - start);
+	f64 dc = (f64) (ec - sc) / (f64) CLOCKS_PER_SEC;
 	printf("[info] scene rendered in %.2f seconds\n", duration);
+	printf("[info] scene rendered in %.2f seconds\n", dc);
 	return 0;
 }

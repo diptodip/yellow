@@ -260,9 +260,9 @@ inline void render(
 	u32 pixel_count = rows * cols;
 	u32 num_tiles = ((rows + tile_rows - 1) / tile_rows)
 		* ((cols + tile_cols - 1) / tile_cols);
-	u32 tile_rendered_count = 0;
 	f64 progress = 0.0;
-# pragma omp parallel for schedule(dynamic, 1)
+	RenderQueue render_queue = {};
+	render_queue.jobs = (RenderJob *)malloc(sizeof(RenderJob) * num_tiles);
 	for (u32 i = 0; i < rows; i += tile_rows) {
 		u32 row_min = i;
 		u32 row_max = row_min + tile_rows;
@@ -275,22 +275,30 @@ inline void render(
 			if (col_max > cols) {
 				col_max = cols;
 			}
-			render_tile(
-				world,
-				camera,
-				rows,
-				cols,
-				row_min,
-				row_max,
-				col_min,
-				col_max,
-				num_samples,
-				out
-			);
-			tile_rendered_count++;
-			progress = 100.0 * (f64) tile_rendered_count / (f64) num_tiles;
-			printf("[running] rendered %.2f%%...\n", progress);
+			RenderJob *render_job = render_queue.jobs + render_queue.num_tiles++;
+			render_job->row_min = row_min;
+			render_job->row_max = row_max;
+			render_job->col_min = col_min;
+			render_job->col_max = col_max;
 		}
+	}
+# pragma omp parallel for schedule(dynamic, 1)
+	for (u32 i = 0; i < render_queue.num_tiles; i++) {
+		render_tile(
+			world,
+			camera,
+			rows,
+			cols,
+			render_queue.jobs[i].row_min,
+			render_queue.jobs[i].row_max,
+			render_queue.jobs[i].col_min,
+			render_queue.jobs[i].col_max,
+			num_samples,
+			out
+		);
+		render_queue.tile_rendered_count++;
+		progress = 100.0 * (f64) render_queue.tile_rendered_count / (f64) num_tiles;
+		printf("[running] rendered %.2f%%...\n", progress);
 	}
 	printf("[info] writing image...\n");
 	stbi_write_bmp("image.bmp", cols, rows, 4, image);

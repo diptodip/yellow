@@ -1,3 +1,5 @@
+#ifndef YELLOW_TYPES
+#define YELLOW_TYPES
 #include <stdint.h>
 
 typedef double f64;
@@ -10,3 +12,4 @@ typedef int16_t i16;
 typedef uint16_t u16;
 typedef int8_t i8;
 typedef uint8_t u8;
+#endif //YELLOW_TYPES

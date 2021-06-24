@@ -1,3 +1,10 @@
+#ifndef YELLOW_LINALG
+#define YELLOW_LINALG
+#include <cmath>
+#include <cstdio>
+#include <random>
+#include "types.h"
+
 struct Vec3D {
 	f64 x;
 	f64 y;
@@ -132,3 +139,4 @@ Vec3D random_unit_disk_vector() {
 void print_vec(Vec3D *a) {
 	printf("(x: %f, y: %f, z: %f)", a->x, a->y, a->z);
 }
+#endif //YELLOW_LINALG

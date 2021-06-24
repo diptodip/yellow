@@ -3,8 +3,6 @@
 #include <ctime>
 #include <random>
 #include <time.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 #include "types.h"
 #include "linalg.h"
 #include "colors.h"

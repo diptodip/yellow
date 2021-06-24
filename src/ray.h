@@ -1,3 +1,14 @@
+#ifndef YELLOW_RAY
+#define YELLOW_RAY
+#include <cmath>
+#include <cstdio>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#include "linalg.h"
+#include "colors.h"
+#include "materials.h"
+#include "cameras.h"
+
 struct Ray {
 	Point3D origin;
 	Vec3D direction;
@@ -88,7 +99,7 @@ struct IntersectionResult {
 	bool intersected;
 };
 
-IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
+inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	IntersectionResult result = {};
 	Point3D shifted_origin = ray->origin - sphere->origin;
 	f64 direction_sq_l2 = dot(&ray->direction, &ray->direction);
@@ -149,7 +160,7 @@ inline Intersections find_intersections(Ray *ray, std::vector<Traceable> world) 
 	return intersections;
 }
 
-Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
+inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
 	Vec3D basis1 = cross(&camera->up, &camera->normal);
 	basis1 = normalize(&basis1);
 	Vec3D basis2 = cross(&camera->normal, &basis1);
@@ -198,7 +209,7 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 	return color;
 }
 
-void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
+inline void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
 	static thread_local std::mt19937 generator;
 	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
 	u32 *image = imalloc(rows, cols);
@@ -226,3 +237,4 @@ void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32
 	stbi_write_bmp("image.bmp", cols, rows, 4, image);
 	printf("[ok] done!\n");
 }
+#endif // YELLOW_RAY

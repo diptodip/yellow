@@ -1,3 +1,9 @@
+#ifndef YELLOW_MATERIALS
+#define YELLOW_MATERIALS
+#include "types.h"
+#include "linalg.h"
+#include "colors.h"
+
 struct Material {
 	RGBA color;
 	f64 scatter_index;
@@ -22,3 +28,4 @@ struct Traceable {
 	TraceableObject object;
 	Material material;
 };
+#endif //YELLOW_MATERIALS

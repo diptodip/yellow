@@ -1,3 +1,10 @@
+#ifndef YELLOW_CAMERAS
+#define YELLOW_CAMERAS
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include "types.h"
+#include "linalg.h"
+
 struct ImagePlane {
 	f64 fov;
 	f64 aspect_ratio;
@@ -33,3 +40,4 @@ ImagePlane create_image_plane(f64 fov, f64 aspect_ratio, u32 pixel_height) {
 u32* imalloc(size_t rows, size_t cols) {
 	return (u32*) malloc(sizeof(u32) * rows * cols);
 }
+#endif //YELLOW_CAMERAS

@@ -1,3 +1,10 @@
+#ifndef YELLOW_COLORS
+#define YELLOW_COLORS
+#include <cmath>
+#include <random>
+#include "types.h"
+#include "linalg.h"
+
 struct RGBA {
 	f64 r;
 	f64 g;
@@ -111,3 +118,4 @@ u32 rgba_to_u32(RGBA *color) {
 	hex |= (r << 0);
 	return hex;
 }
+#endif //YELLOW_COLORS

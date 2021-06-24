@@ -11,7 +11,7 @@ struct Vec3D {
 	f64 z;
 };
 
-using Point3D = Vec3D;
+typedef Vec3D Point3D;
 
 // binary vec ops
 Vec3D operator+(const Vec3D& a, const Vec3D& b) {
@@ -97,7 +97,8 @@ Vec3D normalize(Vec3D *a) {
 }
 
 Vec3D random_direction_in_ranges(f64 x1, f64 x2, f64 y1, f64 y2, f64 z1, f64 z2) {
-	static thread_local std::mt19937 generator;
+	static thread_local std::random_device rd;
+	static thread_local std::mt19937 generator(rd());
 	std::uniform_real_distribution<> x_distribution(x1, x2);
 	std::uniform_real_distribution<> y_distribution(y1, y2);
 	std::uniform_real_distribution<> z_distribution(z1, z2);

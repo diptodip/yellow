@@ -1,9 +1,12 @@
 #ifndef YELLOW_CAMERAS
 #define YELLOW_CAMERAS
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include "types.h"
 #include "linalg.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288
+#endif
 
 struct ImagePlane {
 	f64 fov;

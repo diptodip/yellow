@@ -210,18 +210,22 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 	return color;
 }
 
-inline void render_tile(
-	std::vector<Traceable> world,
-	Camera camera,
-	u32 rows,
-	u32 cols,
-	u32 row_min,
-	u32 row_max,
-	u32 col_min,
-	u32 col_max,
-	u32 num_samples,
-	u32 *out
-) {
+inline void render_tile(RenderQueue *render_queue) {
+	u64 job_index = locked_increment(&render_queue->next_job_index, 1);
+	if (job_index > render_queue->num_tiles) {
+		return;
+	}
+	RenderJob *render_job = render_queue->jobs + job_index;
+	std::vector<Traceable> world = render_job->world;
+	Camera camera = render_job->camera;
+	u32 rows = render_job->rows;
+	u32 cols = render_job->cols;
+	u32 row_min = render_job->row_min;
+	u32 row_max = render_job->row_max;
+	u32 col_min = render_job->col_min;
+	u32 col_max = render_job->col_max;
+	u32 num_samples = render_job->num_samples;
+	u32 *out = render_job->out;
 	static thread_local std::random_device rd;
 	static thread_local std::mt19937 generator(rd());
 	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
@@ -243,6 +247,7 @@ inline void render_tile(
 			out[i * cols + j] = color_u32;
 		}
 	}
+	locked_increment(&render_queue->tile_rendered_count, 1);
 }
 
 inline void render(
@@ -276,27 +281,22 @@ inline void render(
 				col_max = cols;
 			}
 			RenderJob *render_job = render_queue.jobs + render_queue.num_tiles++;
+			render_job->world = world;
+			render_job->camera = camera;
+			render_job->rows = rows;
+			render_job->cols = cols;
 			render_job->row_min = row_min;
 			render_job->row_max = row_max;
 			render_job->col_min = col_min;
 			render_job->col_max = col_max;
+			render_job->num_samples = num_samples;
+			render_job->out = out;
 		}
 	}
+	locked_increment(&render_queue.next_job_index, 0);
 # pragma omp parallel for schedule(dynamic, 1)
-	for (u32 i = 0; i < render_queue.num_tiles; i++) {
-		render_tile(
-			world,
-			camera,
-			rows,
-			cols,
-			render_queue.jobs[i].row_min,
-			render_queue.jobs[i].row_max,
-			render_queue.jobs[i].col_min,
-			render_queue.jobs[i].col_max,
-			num_samples,
-			out
-		);
-		render_queue.tile_rendered_count++;
+	for (u32 i = 0; i < num_tiles; i++) {
+		render_tile(&render_queue);
 		progress = 100.0 * (f64) render_queue.tile_rendered_count / (f64) num_tiles;
 		printf("[running] rendered %.2f%%...\n", progress);
 	}

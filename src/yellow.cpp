@@ -85,7 +85,15 @@ void test_spheres() {
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
-	render(world, camera, image_plane.rows, image_plane.cols, 100);
+	render(
+		world,
+		camera,
+		image_plane.rows,
+		image_plane.cols,
+		image_plane.rows / 18,
+		image_plane.cols / 48,
+		100
+	);
 }
 
 void random_spheres() {
@@ -113,7 +121,8 @@ void random_spheres() {
 	};
 	Traceable ground = {SphereT, ground_sphere, ground_material};
 	world.push_back(ground);
-	static thread_local std::mt19937 generator;
+	static thread_local std::random_device rd;
+	static thread_local std::mt19937 generator(rd());
 	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
 	for (i32 i = -11; i < 11; i++) {
 		for (i32 j = -11; j < 11; j++) {
@@ -203,7 +212,15 @@ void random_spheres() {
 	world.push_back(big_glass_traceable);
 	world.push_back(big_diffuse_traceable);
 	world.push_back(big_reflective_traceable);
-	render(world, camera, image_plane.rows, image_plane.cols, 100);
+	render(
+		world,
+		camera,
+		image_plane.rows,
+		image_plane.cols,
+		image_plane.rows / 75,
+		image_plane.cols / 60,
+		100
+	);
 }
 
 int main(int argc, char **args) {

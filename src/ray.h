@@ -8,6 +8,7 @@
 #include "colors.h"
 #include "materials.h"
 #include "cameras.h"
+#include "threads.h"
 
 struct Ray {
 	Point3D origin;
@@ -209,19 +210,25 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 	return color;
 }
 
-inline void render_tile(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
-}
-
-inline void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
-	static thread_local std::mt19937 generator;
+inline void render_tile(
+	std::vector<Traceable> world,
+	Camera camera,
+	u32 rows,
+	u32 cols,
+	u32 row_min,
+	u32 row_max,
+	u32 col_min,
+	u32 col_max,
+	u32 num_samples,
+	u32 *out
+) {
+	static thread_local std::random_device rd;
+	static thread_local std::mt19937 generator(rd());
 	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
-	u32 *image = imalloc(rows, cols);
-	u32 *out = image;
-	printf("[start] rendering %dpx x %dpx (width x height)\n", cols, rows);
-# pragma omp parallel for schedule(dynamic, 1)
-	for (u32 i = 0; i < rows; i++) {
-		printf("[running] %d lines remaining\n", rows - i);
-		for (u32 j = 0; j < cols; j++) {
+	u32 tile_rows = row_max - row_min;
+	u32 tile_cols = col_max - col_min;
+	for (u32 i = row_min; i < row_max; i++) {
+		for (u32 j = col_min; j < col_max; j++) {
 			RGBA color = {0.0, 0.0, 0.0, 1.0};
 			for (u32 s = 0; s < num_samples; s++) {
 				f64 row_rand = unit_uniform_distribution(generator);
@@ -234,6 +241,55 @@ inline void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 co
 			color = color / (f64) num_samples;
 			u32 color_u32 = rgba_to_u32(&color);
 			out[i * cols + j] = color_u32;
+		}
+	}
+}
+
+inline void render(
+	std::vector<Traceable> world,
+	Camera camera,
+	u32 rows,
+	u32 cols,
+	u32 tile_rows,
+	u32 tile_cols,
+	u32 num_samples
+) {
+	printf("\n[start] rendering %dpx x %dpx (width x height) image with %dpx x %dpx tiles\n", rows, cols, tile_rows, tile_cols);
+	u32 *image = imalloc(rows, cols);
+	u32 *out = image;
+	u32 pixel_count = rows * cols;
+	u32 num_tiles = ((rows + tile_rows - 1) / tile_rows)
+		* ((cols + tile_cols - 1) / tile_cols);
+	u32 tile_rendered_count = 0;
+	f64 progress = 0.0;
+# pragma omp parallel for schedule(dynamic, 1)
+	for (u32 i = 0; i < rows; i += tile_rows) {
+		u32 row_min = i;
+		u32 row_max = row_min + tile_rows;
+		if (row_max > rows) {
+			row_max = rows;
+		}
+		for (u32 j = 0; j < cols; j += tile_cols) {
+			u32 col_min = j;
+			u32 col_max = col_min + tile_cols;
+			if (col_max > cols) {
+				col_max = cols;
+			}
+			render_tile(
+				world,
+				camera,
+				rows,
+				cols,
+				row_min,
+				row_max,
+				col_min,
+				col_max,
+				num_samples,
+				out
+			);
+			tile_rendered_count++;
+			progress = 100.0 * (f64) tile_rendered_count / (f64) num_tiles;
+			printf("[running] rendered %.2f%%...\n", progress);
 		}
 	}
 	printf("[info] writing image...\n");

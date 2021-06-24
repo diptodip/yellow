@@ -168,14 +168,14 @@ inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
 	Vec3D random_lens_offset = lens_radius * random_unit_vector();
 	random_lens_offset = (basis1 * random_lens_offset.x) + (basis2 * random_lens_offset.y);
 	Point3D top_left = (camera->origin
-			    - (camera->focal_distance * camera->image_plane.width * basis1 / 2.0)
-			    + (camera->focal_distance * camera->image_plane.height * basis2 / 2.0)
-			    - (camera->focal_distance * camera->normal));
+				- (camera->focal_distance * camera->image_plane.width * basis1 / 2.0)
+				+ (camera->focal_distance * camera->image_plane.height * basis2 / 2.0)
+				- (camera->focal_distance * camera->normal));
 	Vec3D direction = (top_left
-			   + (camera->focal_distance * basis1 * col_frac * camera->image_plane.width)
-			   - (camera->focal_distance * basis2 * row_frac * camera->image_plane.height)
-			   - camera->origin
-			   - random_lens_offset);
+				+ (camera->focal_distance * basis1 * col_frac * camera->image_plane.width)
+				- (camera->focal_distance * basis2 * row_frac * camera->image_plane.height)
+				- camera->origin
+				- random_lens_offset);
 	return (Ray) {camera->origin + random_lens_offset, direction};
 }
 
@@ -207,6 +207,9 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 		color *= trace(&scattered, world, depth - 1);
 	}
 	return color;
+}
+
+inline void render_tile(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {
 }
 
 inline void render(std::vector<Traceable> world, Camera camera, u32 rows, u32 cols, u32 num_samples) {

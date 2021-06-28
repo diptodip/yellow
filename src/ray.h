@@ -177,7 +177,7 @@ inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
 }
 
 inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) {
-	locked_increment(&render_queue->ray_count, 1);
+	sync_fetch_and_add(&render_queue->ray_count, 1);
 	if (depth <= 0) {
 		// light enters the void if we hit the depth limit
 		return (RGBA) {0.0, 0.0, 0.0, 1.0};
@@ -208,7 +208,7 @@ inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) 
 }
 
 inline b8 render_tile(RenderQueue *render_queue) {
-	u64 job_index = locked_increment(&render_queue->next_job_index, 1);
+	u64 job_index = sync_fetch_and_add(&render_queue->next_job_index, 1);
 	if (job_index >= render_queue->num_tiles) {
 		return false;
 	}
@@ -241,7 +241,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 			out[i * cols + j] = color_u32;
 		}
 	}
-	locked_increment(&render_queue->tile_rendered_count, 1);
+	sync_fetch_and_add(&render_queue->tile_rendered_count, 1);
 	return true;
 }
 
@@ -295,7 +295,7 @@ inline f64 render(
 			render_job->out = out;
 		}
 	}
-	locked_increment(&render_queue.next_job_index, 0);
+	sync_fetch_and_add(&render_queue.next_job_index, 0);
 	ThreadHandle threads[num_threads];
 	for (u32 i = 0; i < num_threads; i++) {
 		ThreadHandle thread = create_thread(render_thread, (void *) &render_queue);

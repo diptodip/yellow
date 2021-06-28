@@ -8,8 +8,6 @@
 #include "ray.h"
 #include "threads.h"
 #include "rand.h"
-// TODO(dd): implement include guards in the headers
-// and include them in each other?
 
 f64 test_spheres(u32 num_threads) {
 	RGBA dark_blue = {0.1, 0.2, 0.7, 1.0};

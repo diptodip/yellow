@@ -26,6 +26,13 @@ enum TraceableType {
 struct Traceable {
 	TraceableType type;
 	TraceableObject object;
-	Material material;
+	u32 material_index;
+};
+
+struct World {
+	u32 num_materials;
+	u32 num_traceables;
+	Material *materials;
+	Traceable *traceables;
 };
 #endif //YELLOW_MATERIALS

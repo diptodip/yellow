@@ -2,8 +2,8 @@
 #define YELLOW_LINALG
 #include <cmath>
 #include <cstdio>
-#include <random>
 #include "types.h"
+#include "rand.h"
 
 struct Vec3D {
 	f64 x;
@@ -97,13 +97,7 @@ Vec3D normalize(Vec3D *a) {
 }
 
 Vec3D random_direction_in_ranges(f64 x1, f64 x2, f64 y1, f64 y2, f64 z1, f64 z2) {
-	static thread_local std::random_device rd;
-	static thread_local std::mt19937 generator(rd());
-	std::uniform_real_distribution<> x_distribution(x1, x2);
-	std::uniform_real_distribution<> y_distribution(y1, y2);
-	std::uniform_real_distribution<> z_distribution(z1, z2);
-	
-	return (Vec3D) {x_distribution(generator), y_distribution(generator), z_distribution(generator)};
+	return (Vec3D) {uniform(x1, x2), uniform(y1, y2), uniform(z1, z2)};
 }
 
 Vec3D random_unit_vector() {

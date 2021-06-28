@@ -33,7 +33,8 @@
 
 # Build artifacts
 /targets/*
-./*.bmp
+*.bmp
+!img/*.bmp
 
 # Editor files
 *#*

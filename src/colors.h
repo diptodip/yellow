@@ -1,7 +1,6 @@
 #ifndef YELLOW_COLORS
 #define YELLOW_COLORS
 #include <cmath>
-#include <random>
 #include "types.h"
 #include "linalg.h"
 
@@ -88,20 +87,16 @@ RGBA& operator+=(RGBA& a, const RGBA& b) {
 }
 
 RGBA random_opaque_color() {
-	static thread_local std::mt19937 generator;
-	std::uniform_real_distribution<> color_distribution(0.0, 1.0);
-	f64 r = color_distribution(generator);
-	f64 g = color_distribution(generator);
-	f64 b = color_distribution(generator);
+	f64 r = unit_uniform();
+	f64 g = unit_uniform();
+	f64 b = unit_uniform();
 	return (RGBA) {r, g, b, 1.0};
 }
 
 RGBA random_opaque_color(f64 min, f64 max) {
-	static thread_local std::mt19937 generator;
-	std::uniform_real_distribution<> color_distribution(min, max);
-	f64 r = color_distribution(generator);
-	f64 g = color_distribution(generator);
-	f64 b = color_distribution(generator);
+	f64 r = uniform(min, max);
+	f64 g = uniform(min, max);
+	f64 b = uniform(min, max);
 	return (RGBA) {r, g, b, 1.0};
 }
 

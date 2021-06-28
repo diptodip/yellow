@@ -62,9 +62,7 @@ inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool i
 		return reflect(ray, normal_pointer, off_pointer);
 	}
 	f64 reflectivity = schlick(cos_theta, refraction_ratio);
-	static thread_local std::mt19937 generator;
-	std::uniform_real_distribution<> reflect_dist(0.0, 1.0);
-	f64 reflect_check = reflect_dist(generator);
+	f64 reflect_check = unit_uniform();
 	if (reflect_check < reflectivity) {
 		return reflect(ray, normal_pointer, off_pointer);
 	}
@@ -84,20 +82,20 @@ inline Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f64 scatter_index) {
 	}
 }
 
-struct Intersections {
-	std::vector<Point3D> origins;
-	std::vector<Vec3D> normals;
-	std::vector<bool> insides;
-	std::vector<Traceable*> traceables;
-	u32 nearest_index;
+struct Intersection {
+	Point3D origin;
+	Vec3D normal;
+	b8 inside;
+	b8 intersected;
+	Traceable *traceable;
 };
 
 struct IntersectionResult {
 	Point3D origin;
 	Vec3D normal; // always local, i.e. points away from ray direction
 	f64 distance;
-	bool inside;
-	bool intersected;
+	b8 inside;
+	b8 intersected;
 };
 
 inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
@@ -106,8 +104,8 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	f64 direction_sq_l2 = dot(&ray->direction, &ray->direction);
 	f64 origin_sq_l2 = dot(&shifted_origin, &shifted_origin);
 	f64 origin_dot_direction = dot(&shifted_origin, &ray->direction);
-	f64 squared_radius = pow(sphere->radius, 2.0);
-	f64 discriminant = (std::pow(origin_dot_direction, 2.0) - (direction_sq_l2 * (origin_sq_l2 - squared_radius)));
+	f64 squared_radius = sphere->radius * sphere-> radius;
+	f64 discriminant = ((origin_dot_direction * origin_dot_direction) - (direction_sq_l2 * (origin_sq_l2 - squared_radius)));
 	if (discriminant < 0.0) {
 		result.intersected = false;
 		return result;
@@ -134,31 +132,29 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	return result;
 }
 
-inline Intersections find_intersections(Ray *ray, std::vector<Traceable> world) {
-	Intersections intersections = {};
-	intersections.nearest_index = 0;
-	f64 nearest_distance = std::numeric_limits<double>::infinity();
-	for (u32 i = 0; i < (u32) world.size(); i++) {
-		Traceable *traceable = &world[i];
+inline Intersection find_intersection(Ray *ray, World *world) {
+	Intersection intersection = {};
+	u32 num_traceables = world->num_traceables;
+	f64 nearest_distance = (f64) UINT32_MAX;
+	for (u32 i = 0; i < num_traceables; i++) {
+		Traceable *traceable = &world->traceables[i];
 		IntersectionResult result;
 		// TODO(dd): handle other traceable types
 		switch (traceable->type) {
 			case SphereT:
-				result = intersect_sphere(ray, (Sphere*) &traceable->object);
+				result = intersect_sphere(ray, (Sphere *) &traceable->object);
 				break;
-		}
-		if (result.intersected) {
-			intersections.origins.push_back(result.origin);
-			intersections.normals.push_back(result.normal);
-			intersections.insides.push_back(result.inside);
-			intersections.traceables.push_back(traceable);
 		}
 		if (result.intersected && (result.distance < nearest_distance)) {
 			nearest_distance = result.distance;
-			intersections.nearest_index = intersections.origins.size() - 1;
+			intersection.origin = result.origin;
+			intersection.normal = result.normal;
+			intersection.inside = result.inside;
+			intersection.intersected = true;
+			intersection.traceable = traceable;
 		}
 	}
-	return intersections;
+	return intersection;
 }
 
 inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
@@ -169,24 +165,25 @@ inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
 	Vec3D random_lens_offset = lens_radius * random_unit_vector();
 	random_lens_offset = (basis1 * random_lens_offset.x) + (basis2 * random_lens_offset.y);
 	Point3D top_left = (camera->origin
-				- (camera->focal_distance * camera->image_plane.width * basis1 / 2.0)
-				+ (camera->focal_distance * camera->image_plane.height * basis2 / 2.0)
-				- (camera->focal_distance * camera->normal));
+		- (camera->focal_distance * camera->image_plane.width * basis1 / 2.0)
+		+ (camera->focal_distance * camera->image_plane.height * basis2 / 2.0)
+		- (camera->focal_distance * camera->normal));
 	Vec3D direction = (top_left
-				+ (camera->focal_distance * basis1 * col_frac * camera->image_plane.width)
-				- (camera->focal_distance * basis2 * row_frac * camera->image_plane.height)
-				- camera->origin
-				- random_lens_offset);
+		+ (camera->focal_distance * basis1 * col_frac * camera->image_plane.width)
+		- (camera->focal_distance * basis2 * row_frac * camera->image_plane.height)
+		- camera->origin
+		- random_lens_offset);
 	return (Ray) {camera->origin + random_lens_offset, direction};
 }
 
-RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
+inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) {
+	locked_increment(&render_queue->ray_count, 1);
 	if (depth <= 0) {
 		// light enters the void if we hit the depth limit
 		return (RGBA) {0.0, 0.0, 0.0, 1.0};
 	}
-	Intersections intersections = find_intersections(ray, world);
-	if (intersections.origins.size() == 0) {
+	Intersection intersection = find_intersection(ray, world);
+	if (!intersection.intersected) {
 		// light is colored according to height on the image plane
 		// if we didn't intersect anything
 		Vec3D direction = normalize(&ray->direction);
@@ -194,30 +191,30 @@ RGBA trace(Ray *ray, std::vector<Traceable> world, u32 depth) {
 		RGBA bg_color = {1.0 - (0.5 * height), 1.0 - (0.3 * height), 1.0, 1.0};
 		return bg_color;
 	}
-	Traceable *traceable = intersections.traceables[intersections.nearest_index];
-	Material material = traceable->material;
-	Point3D intersection_point = intersections.origins[intersections.nearest_index];
-	Vec3D normal = intersections.normals[intersections.nearest_index];
-	bool inside = intersections.insides[intersections.nearest_index];
+	Traceable *traceable = intersection.traceable;
+	Material material = world->materials[traceable->material_index];
+	Point3D intersection_point = intersection.origin;
+	Vec3D normal = intersection.normal;
+	bool inside = intersection.inside;
 	RGBA color = material.color;
 	if (material.refractive_index > 0.0) {
 		Ray refracted = refract(ray, &normal, &intersection_point, inside, material.refractive_index);
-		color *= trace(&refracted, world, depth - 1);
+		color *= trace(&refracted, world, render_queue, depth - 1);
 	} else {
 		Ray scattered = scatter(ray, &normal, &intersection_point, material.scatter_index);
-		color *= trace(&scattered, world, depth - 1);
+		color *= trace(&scattered, world, render_queue, depth - 1);
 	}
 	return color;
 }
 
-inline void render_tile(RenderQueue *render_queue) {
+inline b8 render_tile(RenderQueue *render_queue) {
 	u64 job_index = locked_increment(&render_queue->next_job_index, 1);
-	if (job_index > render_queue->num_tiles) {
-		return;
+	if (job_index >= render_queue->num_tiles) {
+		return false;
 	}
 	RenderJob *render_job = render_queue->jobs + job_index;
-	std::vector<Traceable> world = render_job->world;
-	Camera camera = render_job->camera;
+	World *world = render_job->world;
+	Camera *camera = render_job->camera;
 	u32 rows = render_job->rows;
 	u32 cols = render_job->cols;
 	u32 row_min = render_job->row_min;
@@ -226,21 +223,18 @@ inline void render_tile(RenderQueue *render_queue) {
 	u32 col_max = render_job->col_max;
 	u32 num_samples = render_job->num_samples;
 	u32 *out = render_job->out;
-	static thread_local std::random_device rd;
-	static thread_local std::mt19937 generator(rd());
-	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
 	u32 tile_rows = row_max - row_min;
 	u32 tile_cols = col_max - col_min;
 	for (u32 i = row_min; i < row_max; i++) {
 		for (u32 j = col_min; j < col_max; j++) {
 			RGBA color = {0.0, 0.0, 0.0, 1.0};
 			for (u32 s = 0; s < num_samples; s++) {
-				f64 row_rand = unit_uniform_distribution(generator);
-				f64 col_rand = unit_uniform_distribution(generator);
+				f64 row_rand = unit_uniform();
+				f64 col_rand = unit_uniform();
 				f64 u = ((f64) i + 0.5 + row_rand) / ((f64) rows);
 				f64 v = ((f64) j + 0.5 + col_rand) / ((f64) cols);
-				Ray ray = prime_ray(&camera, u, v);
-				color += trace(&ray, world, 50);
+				Ray ray = prime_ray(camera, u, v);
+				color += trace(&ray, world, render_queue, 50);
 			}
 			color = color / (f64) num_samples;
 			u32 color_u32 = rgba_to_u32(&color);
@@ -248,26 +242,34 @@ inline void render_tile(RenderQueue *render_queue) {
 		}
 	}
 	locked_increment(&render_queue->tile_rendered_count, 1);
+	return true;
 }
 
-inline void render(
-	std::vector<Traceable> world,
-	Camera camera,
+inline threaded render_thread(void *args) {
+	RenderQueue *render_queue = (RenderQueue *) args;
+	f64 progress = 0.0;
+	while(render_tile(render_queue)) {};
+	return 0;
+}
+
+inline f64 render(
+	World *world,
+	Camera *camera,
 	u32 rows,
 	u32 cols,
 	u32 tile_rows,
 	u32 tile_cols,
-	u32 num_samples
+	u32 num_samples,
+	u32 num_threads
 ) {
-	printf("\n[start] rendering %dpx x %dpx (width x height) image with %dpx x %dpx tiles\n", rows, cols, tile_rows, tile_cols);
 	u32 *image = imalloc(rows, cols);
 	u32 *out = image;
 	u32 pixel_count = rows * cols;
 	u32 num_tiles = ((rows + tile_rows - 1) / tile_rows)
 		* ((cols + tile_cols - 1) / tile_cols);
-	f64 progress = 0.0;
 	RenderQueue render_queue = {};
 	render_queue.jobs = (RenderJob *)malloc(sizeof(RenderJob) * num_tiles);
+	printf("\n[start] rendering %dpx x %dpx (width x height) image with %dpx x %dpx tiles\n", cols, rows, tile_cols, tile_rows);
 	for (u32 i = 0; i < rows; i += tile_rows) {
 		u32 row_min = i;
 		u32 row_max = row_min + tile_rows;
@@ -294,14 +296,24 @@ inline void render(
 		}
 	}
 	locked_increment(&render_queue.next_job_index, 0);
-# pragma omp parallel for schedule(dynamic, 1)
-	for (u32 i = 0; i < num_tiles; i++) {
-		render_tile(&render_queue);
-		progress = 100.0 * (f64) render_queue.tile_rendered_count / (f64) num_tiles;
-		printf("[running] rendered %.2f%%...\n", progress);
+	ThreadHandle threads[num_threads];
+	for (u32 i = 0; i < num_threads; i++) {
+		ThreadHandle thread = create_thread(render_thread, (void *) &render_queue);
+		threads[i] = thread;
 	}
+	f64 progress = 0.0;
+	while (render_tile(&render_queue)) {
+		progress = ((f64) render_queue.tile_rendered_count
+			/ (f64) render_queue.num_tiles);
+		printf("[running] rendered %.2f%%...\n", progress * 100.0);
+	};
+	for (u32 i = num_threads - 1; i > 0; i--) {
+		join_thread(threads[i]);
+	}
+	f64 ray_count = (f64) render_queue.ray_count;
 	printf("[info] writing image...\n");
 	stbi_write_bmp("image.bmp", cols, rows, 4, image);
 	printf("[ok] done!\n");
+	return ray_count;
 }
 #endif // YELLOW_RAY

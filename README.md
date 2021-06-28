@@ -4,7 +4,7 @@ Weekend](https://raytracing.github.io/) series. None of this is good
 programming -- it's mostly a learning exercise for different ways to speed up a
 program.
 
-![720p sphere render](/img/720p.bmp)
+![720p sphere render](/img/preview.bmp)
 
 ## Features
 * *Very* simple code

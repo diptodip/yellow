@@ -1,18 +1,17 @@
 #include <cmath>
 #include <cstdio>
-#include <ctime>
-#include <random>
-#include <time.h>
 #include "types.h"
 #include "linalg.h"
 #include "colors.h"
 #include "materials.h"
 #include "cameras.h"
 #include "ray.h"
+#include "threads.h"
+#include "rand.h"
 // TODO(dd): implement include guards in the headers
 // and include them in each other?
 
-void test_spheres() {
+f64 test_spheres(u32 num_threads) {
 	RGBA dark_blue = {0.1, 0.2, 0.7, 1.0};
 	RGBA dark_red = {0.7, 0.2, 0.1, 1.0};
 	RGBA grass_green = {0.8, 0.8, 0.0, 1.0};
@@ -62,17 +61,24 @@ void test_spheres() {
 		.origin = (Point3D) {-1.0, 0.0, -1.0},
 		.radius = -0.45,
 	};
-	Traceable ground_sphere = {SphereT, s1, m1};
-	Traceable red_sphere = {SphereT, s2, m2};
-	Traceable metal_sphere = {SphereT, s3, m3};
-	Traceable glass_sphere = {SphereT, s4, m4};
-	Traceable glass_sphere_inside = {SphereT, s5, m5};
-	std::vector<Traceable> world = {};
-	world.push_back(ground_sphere);
-	world.push_back(red_sphere);
-	world.push_back(metal_sphere);
-	world.push_back(glass_sphere);
-	world.push_back(glass_sphere_inside);
+	Traceable ground_sphere = {SphereT, s1, 0};
+	Traceable red_sphere = {SphereT, s2, 1};
+	Traceable metal_sphere = {SphereT, s3, 2};
+	Traceable glass_sphere = {SphereT, s4, 3};
+	Traceable glass_sphere_inside = {SphereT, s5, 4};
+	Material materials[5] = {m1, m2, m3, m4, m5};
+	Traceable traceables[5] = {
+		ground_sphere,
+		red_sphere,
+		metal_sphere,
+		glass_sphere,
+		glass_sphere_inside
+	};
+	World world = {};
+	world.num_materials = 5;
+	world.num_traceables = 5;
+	world.materials = materials;
+	world.traceables = traceables;
 	f64 fov = 20.0;
 	f64 aperture = 0.1;
 	f64 aspect_ratio = 16.0 / 9.0;
@@ -85,22 +91,26 @@ void test_spheres() {
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
-	render(
-		world,
-		camera,
+	printf("[info] total traceables: %d\n", world.num_traceables);
+	printf("[info] total materials: %d\n", world.num_materials);
+	f64 ray_count = render(
+		&world,
+		&camera,
 		image_plane.rows,
 		image_plane.cols,
-		image_plane.rows / 18,
-		image_plane.cols / 48,
-		100
+		image_plane.rows / 36,
+		image_plane.cols / 96,
+		100,
+		num_threads
 	);
+	return ray_count;
 }
 
-void random_spheres() {
+f64 random_spheres(u32 num_threads) {
 	f64 fov = 20.0;
 	f64 aperture = 0.1;
-	f64 aspect_ratio = 1.5;
-	u32 pixel_height = 300;
+	f64 aspect_ratio = (16.0 / 9.0);
+	u32 pixel_height = 216;
 	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
 	Point3D origin = {13.0, 2.0, 3.0};
 	Point3D target = {0.0, 0.0, 0.0};
@@ -109,8 +119,14 @@ void random_spheres() {
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
-	std::vector<Traceable> world = {};
-	Material ground_material = {
+	Material materials[488];
+	Traceable traceables[488];
+	World world = {};
+	world.num_materials = 0;
+	world.num_traceables = 0;
+	world.materials = materials;
+	world.traceables = traceables;
+	static Material ground_material = {
 		.color = (RGBA) {0.5, 0.5, 0.5, 1.0},
 		.scatter_index = 1.0,
 		.refractive_index = 0.0,
@@ -119,17 +135,17 @@ void random_spheres() {
 		.origin = (Point3D) {0.0, -1000.0, 0.0},
 		.radius = 1000.0,
 	};
-	Traceable ground = {SphereT, ground_sphere, ground_material};
-	world.push_back(ground);
-	static thread_local std::random_device rd;
-	static thread_local std::mt19937 generator(rd());
-	std::uniform_real_distribution<> unit_uniform_distribution(0.0, 1.0);
+	Traceable ground = {SphereT, ground_sphere, world.num_materials};
+	world.materials[world.num_materials] = ground_material;
+	world.traceables[world.num_traceables] = ground;
+	world.num_materials++;
+	world.num_traceables++;
 	for (i32 i = -11; i < 11; i++) {
 		for (i32 j = -11; j < 11; j++) {
-			f64 material_check = unit_uniform_distribution(generator);
-			f64 x = (f64) i + (0.9 * unit_uniform_distribution(generator));
+			f64 material_check = unit_uniform();
+			f64 x = (f64) i + (0.9 * unit_uniform());
 			f64 y = 0.2;
-			f64 z = (f64) j + (0.9 * unit_uniform_distribution(generator));
+			f64 z = (f64) j + (0.9 * unit_uniform());
 			Point3D position = {x, y, z};
 			Point3D target = {4.0, 0.2, 0.0};
 			Point3D distance = position - target;
@@ -152,7 +168,7 @@ void random_spheres() {
 				} else if (material_check < 0.95) {
 					// make fuzzy reflective sphere
 					RGBA random_color = random_opaque_color(0.5, 1.0);
-					f64 scatter_index = unit_uniform_distribution(generator);
+					f64 scatter_index = unit_uniform();
 					material = {
 					.color = random_color,
 					.scatter_index = scatter_index,
@@ -174,8 +190,11 @@ void random_spheres() {
 					.radius = y,
 					};
 				}
-				traceable = {SphereT, sphere, material};
-				world.push_back(traceable);
+				traceable = {SphereT, sphere, world.num_materials};
+				world.materials[world.num_materials] = material;
+				world.traceables[world.num_traceables] = traceable;
+				world.num_materials++;
+				world.num_traceables++;
 			}
 		}
 	}
@@ -188,7 +207,11 @@ void random_spheres() {
 		.origin = (Point3D) {0.0, 1.0, 0.0},
 		.radius = 1.0,
 	};
-	Traceable big_glass_traceable = {SphereT, big_glass_sphere, big_glass_material};
+	Traceable big_glass_traceable = {SphereT, big_glass_sphere, world.num_materials};
+	world.materials[world.num_materials] = big_glass_material;
+	world.traceables[world.num_traceables] = big_glass_traceable;
+	world.num_materials++;
+	world.num_traceables++;
 	Material big_diffuse_material = {
 		.color = (RGBA) {0.4, 0.2, 0.1, 1.0},
 		.scatter_index = 1.0,
@@ -198,7 +221,11 @@ void random_spheres() {
 		.origin = (Point3D) {-4.0, 1.0, 0.0},
 		.radius = 1.0,
 	};
-	Traceable big_diffuse_traceable = {SphereT, big_diffuse_sphere, big_diffuse_material};
+	Traceable big_diffuse_traceable = {SphereT, big_diffuse_sphere, world.num_materials};
+	world.materials[world.num_materials] = big_diffuse_material;
+	world.traceables[world.num_traceables] = big_diffuse_traceable;
+	world.num_materials++;
+	world.num_traceables++;
 	Material big_reflective_material = {
 		.color = (RGBA) {0.7, 0.6, 0.5, 1.0},
 		.scatter_index = 0.0,
@@ -208,30 +235,40 @@ void random_spheres() {
 		.origin = (Point3D) {4.0, 1.0, 0.0},
 		.radius = 1.0,
 	};
-	Traceable big_reflective_traceable = {SphereT, big_reflective_sphere, big_reflective_material};
-	world.push_back(big_glass_traceable);
-	world.push_back(big_diffuse_traceable);
-	world.push_back(big_reflective_traceable);
-	render(
-		world,
-		camera,
+	Traceable big_reflective_traceable = {SphereT, big_reflective_sphere, world.num_materials};
+	world.materials[world.num_materials] = big_reflective_material;
+	world.traceables[world.num_traceables] = big_reflective_traceable;
+	world.num_materials++;
+	world.num_traceables++;
+	printf("[info] total traceables: %d\n", world.num_traceables);
+	printf("[info] total materials: %d\n", world.num_materials);
+	f64 ray_count = render(
+		&world,
+		&camera,
 		image_plane.rows,
 		image_plane.cols,
-		image_plane.rows / 75,
-		image_plane.cols / 60,
-		100
+		image_plane.rows / 36,
+		image_plane.cols / 96,
+		100,
+		num_threads
 	);
+	return ray_count;
 }
 
 int main(int argc, char **args) {
-	time_t start = time(NULL);
-	clock_t sc = clock();
-	random_spheres();
-	clock_t ec = clock();
-	time_t stop = time(NULL);
-	f64 duration = (f64) (stop - start);
-	f64 dc = (f64) (ec - sc) / (f64) CLOCKS_PER_SEC;
-	printf("[info] scene rendered in %.2f seconds\n", duration);
-	printf("[info] scene rendered in %.2f seconds\n", dc);
+	u32 num_threads = core_count() - 1;
+	// seed xor_shift64
+	for (u32 i = 0; i < 25; i++) {
+		f64 random = uniform(0, 1);
+	}
+	f64 sc = tick();
+	f64 ray_count = random_spheres(num_threads);
+	// f64 ray_count = test_spheres(num_threads);
+	printf("Processed %llu rays\n", (u64) ray_count);
+	f64 ec = tick();
+	f64 dc = ec - sc;
+	printf("[info] scene rendered in %.2f seconds on %d threads\n", dc, num_threads + 1);
+	printf("[info] rendered %.2f Mrays/s\n", (ray_count / 1.0e6) / dc);
+	printf("[info] ray timing: %.10f s/ray \n", dc / ray_count);
 	return 0;
 }

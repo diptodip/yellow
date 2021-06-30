@@ -10,6 +10,18 @@
 #include "rand.h"
 
 f64 test_spheres(u32 num_threads) {
+	f64 fov = 20.0;
+	f64 aperture = 0.1;
+	f64 aspect_ratio = 16.0 / 9.0;
+	u32 pixel_height = 216;
+	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
+	Point3D origin = {-2.0, 2.0, 1.0};
+	Point3D target = {0.0, 0.0, -1.0};
+	Vec3D normal = origin - target;
+	f64 focal_distance = l2_norm(&normal);
+	normal = normalize(&normal);
+	Vec3D up = {0.0, 1.0, 0.0};
+	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
 	RGBA dark_blue = {0.1, 0.2, 0.7, 1.0};
 	RGBA dark_red = {0.7, 0.2, 0.1, 1.0};
 	RGBA grass_green = {0.8, 0.8, 0.0, 1.0};
@@ -77,18 +89,6 @@ f64 test_spheres(u32 num_threads) {
 	world.num_traceables = 5;
 	world.materials = materials;
 	world.traceables = traceables;
-	f64 fov = 20.0;
-	f64 aperture = 0.1;
-	f64 aspect_ratio = 16.0 / 9.0;
-	u32 pixel_height = 216;
-	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
-	Point3D origin = {-2.0, 2.0, 1.0};
-	Point3D target = {0.0, 0.0, -1.0};
-	Vec3D normal = origin - target;
-	f64 focal_distance = l2_norm(&normal);
-	normal = normalize(&normal);
-	Vec3D up = {0.0, 1.0, 0.0};
-	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
 	printf("[info] total traceables: %d\n", world.num_traceables);
 	printf("[info] total materials: %d\n", world.num_materials);
 	f64 ray_count = render(
@@ -245,8 +245,153 @@ f64 random_spheres(u32 num_threads) {
 		&camera,
 		image_plane.rows,
 		image_plane.cols,
-		image_plane.rows / 36,
-		image_plane.cols / 96,
+		16,
+		16,
+		100,
+		num_threads
+	);
+	return ray_count;
+}
+
+f64 aras_9spheres(u32 num_threads) {
+	f64 fov = 60.0;
+	f64 aperture = 0.1;
+	f64 aspect_ratio = (16.0 / 9.0);
+	u32 pixel_height = 720;
+	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
+	Point3D origin = {0.0, 2.0, 3.0};
+	Point3D target = {0.0, 0.0, 0.0};
+	Vec3D normal = origin - target;
+	f64 focal_distance = 3.0;
+	normal = normalize(&normal);
+	Vec3D up = {0.0, 1.0, 0.0};
+	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
+	Material m1 = {
+		.color = (RGBA) {0.8, 0.8, 0.8, 1.0},
+		.scatter_index = 1.0,
+		.refractive_index = 0.0,
+	};
+	Material m2 = {
+		.color = (RGBA) {0.8, 0.4, 0.4, 1.0},
+		.scatter_index = 1.0,
+		.refractive_index = 0.0,
+	};
+	Material m3 = {
+		.color = (RGBA) {0.4, 0.8, 0.4, 1.0},
+		.scatter_index = 1.0,
+		.refractive_index = 0.0,
+	};
+	Material m4 = {
+		.color = (RGBA) {0.4, 0.4, 0.8, 1.0},
+		.scatter_index = 0.0,
+		.refractive_index = 0.0,
+	};
+	Material m5 = {
+		.color = (RGBA) {0.4, 0.8, 0.4, 1.0},
+		.scatter_index = 0.0,
+		.refractive_index = 0.0,
+	};
+	Material m6 = {
+		.color = (RGBA) {0.4, 0.8, 0.4, 1.0},
+		.scatter_index = 0.2,
+		.refractive_index = 0.0,
+	};
+	Material m7 = {
+		.color = (RGBA) {0.4, 0.8, 0.4, 1.0},
+		.scatter_index = 0.6,
+		.refractive_index = 0.0,
+	};
+	Material m8 = {
+		.color = (RGBA) {1.0, 1.0, 1.0, 1.0},
+		.scatter_index = 0.0,
+		.refractive_index = 1.5,
+	};
+	Material m9 = {
+		.color = (RGBA) {0.8, 0.6, 0.2, 1.0},
+		.scatter_index = 1.0,
+		.refractive_index = 0.0,
+	};
+	Sphere s1 = {
+		.origin = (Point3D) {0.0, -100.5, -1.0},
+		.radius = 100.0,
+	};
+	Sphere s2 = {
+		.origin = (Point3D) {2.0, 0.0, -1.0},
+		.radius = 0.5,
+	};
+	Sphere s3 = {
+		.origin = (Point3D) {0.0, 0.0, -1.0},
+		.radius = 0.5,
+	};
+	Sphere s4 = {
+		.origin = (Point3D) {-2.0, 0.0, -1.0},
+		.radius = 0.5,
+	};
+	Sphere s5 = {
+		.origin = (Point3D) {2.0, 0.0, 1.0},
+		.radius = 0.5,
+	};
+	Sphere s6 = {
+		.origin = (Point3D) {0.0, 0.0, 1.0},
+		.radius = 0.5,
+	};
+	Sphere s7 = {
+		.origin = (Point3D) {-2.0, 0.0, 1.0},
+		.radius = 0.5,
+	};
+	Sphere s8 = {
+		.origin = (Point3D) {0.5, 1.0, 0.5},
+		.radius = 0.5,
+	};
+	Sphere s9 = {
+		.origin = (Point3D) {-1.5, 1.5, 0.0},
+		.radius = 0.3,
+	};
+	Traceable t1 = {SphereT, s1, 0};
+	Traceable t2 = {SphereT, s2, 1};
+	Traceable t3 = {SphereT, s3, 2};
+	Traceable t4 = {SphereT, s4, 3};
+	Traceable t5 = {SphereT, s5, 4};
+	Traceable t6 = {SphereT, s6, 5};
+	Traceable t7 = {SphereT, s7, 6};
+	Traceable t8 = {SphereT, s8, 7};
+	Traceable t9 = {SphereT, s9, 8};
+	Material materials[9] = {
+		m1,
+		m2,
+		m3,
+		m4,
+		m5,
+		m6,
+		m7,
+		m8,
+		m9,
+	};
+	Traceable traceables[9] = {
+		t1,
+		t2,
+		t3,
+		t4,
+		t5,
+		t6,
+		t7,
+		t8,
+		t9,
+	};
+	World world = {};
+	world.num_materials = 9;
+	world.num_traceables = 9;
+	world.materials = materials;
+	world.traceables = traceables;
+	printf("[info] total traceables: %d\n", world.num_traceables);
+	printf("[info] total materials: %d\n", world.num_materials);
+	f64 ray_count = render(
+		&world,
+		&camera,
+		image_plane.rows,
+		image_plane.cols,
+		16,
+		16,
 		100,
 		num_threads
 	);
@@ -260,6 +405,7 @@ int main(int argc, char **args) {
 		f64 random = uniform(0, 1);
 	}
 	f64 sc = tick();
+	// f64 ray_count = aras_9spheres(num_threads);
 	f64 ray_count = random_spheres(num_threads);
 	// f64 ray_count = test_spheres(num_threads);
 	printf("Processed %llu rays\n", (u64) ray_count);
@@ -267,6 +413,6 @@ int main(int argc, char **args) {
 	f64 dc = ec - sc;
 	printf("[info] scene rendered in %.2f seconds on %d threads\n", dc, num_threads + 1);
 	printf("[info] rendered %.2f Mrays/s\n", (ray_count / 1.0e6) / dc);
-	printf("[info] ray timing: %.10f s/ray \n", dc / ray_count);
+	printf("[info] ray timing: %.10f ms/ray \n", (dc * 1000.0) / ray_count);
 	return 0;
 }

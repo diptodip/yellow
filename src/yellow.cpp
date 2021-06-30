@@ -405,8 +405,8 @@ int main(int argc, char **args) {
 		f64 random = uniform(0, 1);
 	}
 	f64 sc = tick();
-	// f64 ray_count = aras_9spheres(num_threads);
-	f64 ray_count = random_spheres(num_threads);
+	f64 ray_count = aras_9spheres(num_threads);
+	// f64 ray_count = random_spheres(num_threads);
 	// f64 ray_count = test_spheres(num_threads);
 	printf("Processed %llu rays\n", (u64) ray_count);
 	f64 ec = tick();

@@ -6,9 +6,9 @@
 #include "rand.h"
 
 struct Vec3D {
-	f64 x;
-	f64 y;
-	f64 z;
+	f32 x;
+	f32 y;
+	f32 z;
 };
 
 typedef Vec3D Point3D;
@@ -31,36 +31,36 @@ Vec3D operator/(const Vec3D& a, const Vec3D& b) {
 }
 
 // binary vec-scalar ops
-Vec3D operator+(const Vec3D& a, const f64 b) {
+Vec3D operator+(const Vec3D& a, const f32 b) {
 	return (Vec3D) {a.x + b, a.y + b, a.z + b};
 }
 
-Vec3D operator*(const Vec3D& a, const f64 b) {
+Vec3D operator*(const Vec3D& a, const f32 b) {
 	return (Vec3D) {a.x * b, a.y * b, a.z * b};
 }
 
-Vec3D operator-(const Vec3D& a, const f64 b) {
+Vec3D operator-(const Vec3D& a, const f32 b) {
 	return (Vec3D) {a.x - b, a.y - b, a.z - b};
 }
 
-Vec3D operator/(const Vec3D& a, const f64 b) {
+Vec3D operator/(const Vec3D& a, const f32 b) {
 	return (Vec3D) {a.x / b, a.y / b, a.z / b};
 }
 
 // binary scalar-vec ops
-Vec3D operator+(const f64 b, const Vec3D& a) {
+Vec3D operator+(const f32 b, const Vec3D& a) {
 	return (Vec3D) {a.x + b, a.y + b, a.z + b};
 }
 
-Vec3D operator*(const f64 b, const Vec3D& a) {
+Vec3D operator*(const f32 b, const Vec3D& a) {
 	return (Vec3D) {a.x * b, a.y * b, a.z * b};
 }
 
-Vec3D operator-(const f64 b, const Vec3D& a) {
+Vec3D operator-(const f32 b, const Vec3D& a) {
 	return (Vec3D) {a.x - b, a.y - b, a.z - b};
 }
 
-Vec3D operator/(const f64 b, const Vec3D& a) {
+Vec3D operator/(const f32 b, const Vec3D& a) {
 	return (Vec3D) {a.x / b, a.y / b, a.z / b};
 }
 
@@ -69,7 +69,7 @@ Vec3D operator-(const Vec3D& a) {
 	return (Vec3D) {-a.x, -a.y, -a.z};
 }
 
-f64 dot(Vec3D *a, Vec3D *b) {
+f32 dot(Vec3D *a, Vec3D *b) {
 	return a->x * b->x + a->y * b->y + a->z * b->z;
 }
 
@@ -82,26 +82,26 @@ Vec3D cross(Vec3D *a, Vec3D *b) {
 	return v;
 }
 
-f64 l2_norm_squared(Vec3D *a) {
+f32 l2_norm_squared(Vec3D *a) {
 	return dot(a, a);
 }
 
-f64 l2_norm(Vec3D *a) {
+f32 l2_norm(Vec3D *a) {
 	return std::sqrt(l2_norm_squared(a));
 }
 
 Vec3D normalize(Vec3D *a) {
-	f64 norm = l2_norm(a);
+	f32 norm = l2_norm(a);
 	Vec3D a_normed = {a->x / norm, a->y / norm, a->z / norm};
 	return a_normed;
 }
 
-Vec3D random_direction_in_ranges(f64 x1, f64 x2, f64 y1, f64 y2, f64 z1, f64 z2) {
+Vec3D random_direction_in_ranges(f32 x1, f32 x2, f32 y1, f32 y2, f32 z1, f32 z2) {
 	return (Vec3D) {uniform(x1, x2), uniform(y1, y2), uniform(z1, z2)};
 }
 
 Vec3D random_unit_vector() {
-	f64 l2_squared = 2.0;
+	f32 l2_squared = 2.0;
 	Vec3D direction;
 	while (l2_squared > 1.0) {
 		direction = random_direction_in_ranges(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
@@ -112,7 +112,7 @@ Vec3D random_unit_vector() {
 }
 
 Vec3D random_unit_sphere_vector() {
-	f64 l2_squared = 2.0;
+	f32 l2_squared = 2.0;
 	Vec3D direction;
 	while (l2_squared > 1.0) {
 		direction = random_direction_in_ranges(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
@@ -122,7 +122,7 @@ Vec3D random_unit_sphere_vector() {
 }
 
 Vec3D random_unit_disk_vector() {
-	f64 l2_squared = 2.0;
+	f32 l2_squared = 2.0;
 	Vec3D direction;
 	while (l2_squared > 1.0) {
 		direction = random_direction_in_ranges(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);

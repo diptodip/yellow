@@ -5,13 +5,13 @@
 #include "linalg.h"
 
 struct RGBA {
-	f64 r;
-	f64 g;
-	f64 b;
-	f64 a;
+	f32 r;
+	f32 g;
+	f32 b;
+	f32 a;
 };
 
-f64 clamp_color_component(f64 c, f64 min, f64 max) {
+f32 clamp_color_component(f32 c, f32 min, f32 max) {
 	if (c < min) {
 		return min;
 	}
@@ -22,7 +22,7 @@ f64 clamp_color_component(f64 c, f64 min, f64 max) {
 }
 
 RGBA max_normalize(RGBA *a) {
-	f64 max = 0.0;
+	f32 max = 0.0;
 	if (a->r > max) {
 		max = a->r;
 	}
@@ -40,11 +40,11 @@ RGBA operator*(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a};
 }
 
-RGBA operator*(const f64 b, const RGBA& a) {
+RGBA operator*(const f32 b, const RGBA& a) {
 	return (RGBA) {a.r * b, a.g * b, a.b * b, a.a * b};
 }
 
-RGBA operator*(const RGBA& a, const f64 b) {
+RGBA operator*(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r * b, a.g * b, a.b * b, a.a * b};
 }
 
@@ -52,7 +52,7 @@ RGBA operator/(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r / b.r, a.g / b.g, a.b / b.b, a.a / b.a};
 }
 
-RGBA operator/(const RGBA& a, const f64 b) {
+RGBA operator/(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r / b, a.g / b, a.b / b, a.a / b};
 }
 
@@ -60,11 +60,11 @@ RGBA operator+(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a};
 }
 
-RGBA operator+(const f64 b, const RGBA& a) {
+RGBA operator+(const f32 b, const RGBA& a) {
 	return (RGBA) {a.r + b, a.g + b, a.b + b, a.a + b};
 }
 
-RGBA operator+(const RGBA& a, const f64 b) {
+RGBA operator+(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r + b, a.g + b, a.b + b, a.a + b};
 }
 
@@ -87,21 +87,21 @@ RGBA& operator+=(RGBA& a, const RGBA& b) {
 }
 
 RGBA random_opaque_color() {
-	f64 r = unit_uniform();
-	f64 g = unit_uniform();
-	f64 b = unit_uniform();
+	f32 r = unit_uniform();
+	f32 g = unit_uniform();
+	f32 b = unit_uniform();
 	return (RGBA) {r, g, b, 1.0};
 }
 
-RGBA random_opaque_color(f64 min, f64 max) {
-	f64 r = uniform(min, max);
-	f64 g = uniform(min, max);
-	f64 b = uniform(min, max);
+RGBA random_opaque_color(f32 min, f32 max) {
+	f32 r = uniform(min, max);
+	f32 g = uniform(min, max);
+	f32 b = uniform(min, max);
 	return (RGBA) {r, g, b, 1.0};
 }
 
 u32 rgba_to_u32(RGBA *color) {
-	f64 cap = 256;
+	f32 cap = 256;
 	u32 r = (u8) (clamp_color_component(std::sqrt(color->r), 0.0, 0.999) * cap);
 	u32 g = (u8) (clamp_color_component(std::sqrt(color->g), 0.0, 0.999) * cap);
 	u32 b = (u8) (clamp_color_component(std::sqrt(color->b), 0.0, 0.999) * cap);

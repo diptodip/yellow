@@ -15,7 +15,7 @@ struct Ray {
 	Vec3D direction;
 };
 
-inline Point3D ray_at(Ray *ray, f64 t) {
+inline Point3D ray_at(Ray *ray, f32 t) {
 	return ray->origin + (t * ray->direction);
 }
 
@@ -34,7 +34,7 @@ inline Ray reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	return (Ray) {off, reflected};
 }
 
-inline Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f64 scatter_index) {
+inline Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f32 scatter_index) {
 	Vec3D direction = ray->direction;
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
@@ -43,26 +43,26 @@ inline Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, 
 	return (Ray) {off, fuzzy_reflected};
 }
 
-inline f64 schlick(f64 cos_theta, f64 refraction_ratio) {
-	f64 r0 = (1.0 - refraction_ratio) / (1.0 + refraction_ratio);
+inline f32 schlick(f32 cos_theta, f32 refraction_ratio) {
+	f32 r0 = (1.0 - refraction_ratio) / (1.0 + refraction_ratio);
 	r0 *= r0;
 	return r0 + (1.0 - r0) * std::pow((1.0 - cos_theta), 5.0);
 }
 
-inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f64 refractive_index) {
+inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f32 refractive_index) {
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
-	f64 refraction_ratio = inside ? refractive_index : (1.0 / refractive_index);
+	f32 refraction_ratio = inside ? refractive_index : (1.0 / refractive_index);
 	Vec3D direction = normalize(&ray->direction);
 	Vec3D negative_direction = -direction;
-	f64 cos_theta = std::fmin(dot(&negative_direction, normal_pointer), 1.0);
-	f64 sin_theta = std::sqrt(1.0 - (cos_theta * cos_theta));
+	f32 cos_theta = std::fmin(dot(&negative_direction, normal_pointer), 1.0);
+	f32 sin_theta = std::sqrt(1.0 - (cos_theta * cos_theta));
 	if ((refraction_ratio * sin_theta) > 1.0) {
 		// must reflect
 		return reflect(ray, normal_pointer, off_pointer);
 	}
-	f64 reflectivity = schlick(cos_theta, refraction_ratio);
-	f64 reflect_check = unit_uniform();
+	f32 reflectivity = schlick(cos_theta, refraction_ratio);
+	f32 reflect_check = unit_uniform();
 	if (reflect_check < reflectivity) {
 		return reflect(ray, normal_pointer, off_pointer);
 	}
@@ -72,7 +72,7 @@ inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool i
 	return (Ray) {off, refracted};
 }
 
-inline Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f64 scatter_index) {
+inline Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f32 scatter_index) {
 	if (scatter_index == 1.0) {
 		return diffuse_bounce(ray, normal, off);
 	} else if (scatter_index == 0.0) {
@@ -93,7 +93,7 @@ struct Intersection {
 struct IntersectionResult {
 	Point3D origin;
 	Vec3D normal; // always local, i.e. points away from ray direction
-	f64 distance;
+	f32 distance;
 	b8 inside;
 	b8 intersected;
 };
@@ -101,24 +101,24 @@ struct IntersectionResult {
 inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	IntersectionResult result = {};
 	Point3D shifted_origin = ray->origin - sphere->origin;
-	f64 direction_sq_l2 = dot(&ray->direction, &ray->direction);
-	f64 origin_sq_l2 = dot(&shifted_origin, &shifted_origin);
-	f64 origin_dot_direction = dot(&shifted_origin, &ray->direction);
-	f64 squared_radius = sphere->radius * sphere-> radius;
-	f64 discriminant = ((origin_dot_direction * origin_dot_direction) - (direction_sq_l2 * (origin_sq_l2 - squared_radius)));
+	f32 direction_sq_l2 = dot(&ray->direction, &ray->direction);
+	f32 origin_sq_l2 = dot(&shifted_origin, &shifted_origin);
+	f32 origin_dot_direction = dot(&shifted_origin, &ray->direction);
+	f32 squared_radius = sphere->radius * sphere-> radius;
+	f32 discriminant = ((origin_dot_direction * origin_dot_direction) - (direction_sq_l2 * (origin_sq_l2 - squared_radius)));
 	if (discriminant < 0.0) {
 		result.intersected = false;
 		return result;
 	}
-	f64 discriminant_sqrt = std::sqrt(discriminant);
-	f64 t0 = (-origin_dot_direction - discriminant_sqrt) / direction_sq_l2;
-	f64 t1 = (-origin_dot_direction + discriminant_sqrt) / direction_sq_l2;
-	if ((t0 < 1e-6) && (t1 < 1e-6)) {
+	f32 discriminant_sqrt = std::sqrt(discriminant);
+	f32 t0 = (-origin_dot_direction - discriminant_sqrt) / direction_sq_l2;
+	f32 t1 = (-origin_dot_direction + discriminant_sqrt) / direction_sq_l2;
+	if ((t0 < 1e-3) && (t1 < 1e-3)) {
 		result.intersected = false;
 		return result;
 	}
 	result.intersected = true;
-	f64 t = (t0 >= 1e-6) ? t0 : t1;
+	f32 t = (t0 >= 1e-3) ? t0 : t1;
 	Point3D intersection = ray_at(ray, t);
 	Vec3D distance_vec = intersection - ray->origin;
 	Vec3D normal = (intersection - sphere->origin) / sphere->radius;
@@ -135,7 +135,7 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 inline Intersection find_intersection(Ray *ray, World *world) {
 	Intersection intersection = {};
 	u32 num_traceables = world->num_traceables;
-	f64 nearest_distance = (f64) UINT64_MAX;
+	f32 nearest_distance = (f32) UINT32_MAX;
 	for (u32 i = 0; i < num_traceables; i++) {
 		Traceable *traceable = &world->traceables[i];
 		IntersectionResult result;
@@ -157,11 +157,11 @@ inline Intersection find_intersection(Ray *ray, World *world) {
 	return intersection;
 }
 
-inline Ray prime_ray(Camera *camera, f64 row_frac, f64 col_frac) {
+inline Ray prime_ray(Camera *camera, f32 row_frac, f32 col_frac) {
 	Vec3D basis1 = cross(&camera->up, &camera->normal);
 	basis1 = normalize(&basis1);
 	Vec3D basis2 = cross(&camera->normal, &basis1);
-	f64 lens_radius = camera->aperture / 2.0;
+	f32 lens_radius = camera->aperture / 2.0;
 	Vec3D random_lens_offset = lens_radius * random_unit_vector();
 	random_lens_offset = (basis1 * random_lens_offset.x) + (basis2 * random_lens_offset.y);
 	Point3D top_left = (camera->origin
@@ -187,8 +187,8 @@ inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) 
 		// light is colored according to height on the image plane
 		// if we didn't intersect anything
 		Vec3D direction = normalize(&ray->direction);
-		f64 height = 0.5 * (direction.y + 1.0);
-		RGBA bg_color = {1.0 - (0.5 * height), 1.0 - (0.3 * height), 1.0, 1.0};
+		f32 height = 0.5 * (direction.y + 1.0);
+		RGBA bg_color = {1.0f - (0.5f * height), 1.0f - (0.3f * height), 1.0f, 1.0f};
 		return bg_color;
 	}
 	Traceable *traceable = intersection.traceable;
@@ -229,14 +229,14 @@ inline b8 render_tile(RenderQueue *render_queue) {
 		for (u32 j = col_min; j < col_max; j++) {
 			RGBA color = {0.0, 0.0, 0.0, 1.0};
 			for (u32 s = 0; s < num_samples; s++) {
-				f64 row_rand = unit_uniform();
-				f64 col_rand = unit_uniform();
-				f64 u = ((f64) i + 0.5 + row_rand) / ((f64) rows);
-				f64 v = ((f64) j + 0.5 + col_rand) / ((f64) cols);
+				f32 row_rand = unit_uniform();
+				f32 col_rand = unit_uniform();
+				f32 u = ((f32) i + 0.5 + row_rand) / ((f32) rows);
+				f32 v = ((f32) j + 0.5 + col_rand) / ((f32) cols);
 				Ray ray = prime_ray(camera, u, v);
 				color += trace(&ray, world, render_queue, 50);
 			}
-			color = color / (f64) num_samples;
+			color = color / (f32) num_samples;
 			u32 color_u32 = rgba_to_u32(&color);
 			out[i * cols + j] = color_u32;
 		}
@@ -247,12 +247,12 @@ inline b8 render_tile(RenderQueue *render_queue) {
 
 inline threaded render_thread(void *args) {
 	RenderQueue *render_queue = (RenderQueue *) args;
-	f64 progress = 0.0;
+	f32 progress = 0.0;
 	while(render_tile(render_queue)) {};
 	return 0;
 }
 
-inline f64 render(
+inline f32 render(
 	World *world,
 	Camera *camera,
 	u32 rows,
@@ -301,16 +301,16 @@ inline f64 render(
 		ThreadHandle thread = create_thread(render_thread, (void *) &render_queue);
 		threads[i] = thread;
 	}
-	f64 progress = 0.0;
+	f32 progress = 0.0;
 	while (render_tile(&render_queue)) {
-		progress = ((f64) render_queue.tile_rendered_count
-			/ (f64) render_queue.num_tiles);
+		progress = ((f32) render_queue.tile_rendered_count
+			/ (f32) render_queue.num_tiles);
 		printf("[running] rendered %.2f%%...\n", progress * 100.0);
 	};
 	for (u32 i = num_threads - 1; i > 0; i--) {
 		join_thread(threads[i]);
 	}
-	f64 ray_count = (f64) render_queue.ray_count;
+	f32 ray_count = (f32) render_queue.ray_count;
 	printf("[info] writing image...\n");
 	stbi_write_bmp("image.bmp", cols, rows, 4, image);
 	printf("[ok] done!\n");

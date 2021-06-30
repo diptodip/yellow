@@ -27,7 +27,7 @@ inline void join_thread(ThreadHandle thread) {
 	CloseHandle(thread);
 }
 
-inline f64 tick() {
+inline f32 tick() {
 	LARGE_INTEGER current_ticks;
 	LARGE_INTEGER tick_frequency;
 	BOOL res = QueryPerformanceCounter(&current_ticks);
@@ -35,7 +35,7 @@ inline f64 tick() {
 		return 0;
 	}
 	res = QueryPerformanceFrequency(&tick_frequency);
-	return (f64) current_ticks.QuadPart / (f64) tick_frequency.QuadPart;
+	return (f32) current_ticks.QuadPart / (f32) tick_frequency.QuadPart;
 }
 #else // UNIX
 #include <pthread.h>
@@ -64,13 +64,13 @@ inline void join_thread(ThreadHandle thread) {
 	pthread_join(thread, NULL);
 }
 
-inline f64 tick() {
+inline f32 tick() {
 	struct timespec ts;
 	u32 res = clock_gettime(CLOCK_MONOTONIC, &ts);
 	if (res == -1) {
 		return 0;
 	}
-	return ((f64) ((ts.tv_sec * 1e9) + ts.tv_nsec)) / (f64) 1.0e9;
+	return ((f32) ((ts.tv_sec * 1e9) + ts.tv_nsec)) / (f32) 1.0e9;
 }
 #endif //_WIN32
 

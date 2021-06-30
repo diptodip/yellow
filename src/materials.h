@@ -7,13 +7,13 @@
 
 struct Material {
 	RGBA color;
-	f64 scatter_index;
-	f64 refractive_index;
+	f32 scatter_index;
+	f32 refractive_index;
 };
 
 struct Sphere {
 	Point3D origin;
-	f64 radius;
+	f32 radius;
 };
 
 union TraceableObject {

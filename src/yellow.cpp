@@ -9,16 +9,16 @@
 #include "threads.h"
 #include "rand.h"
 
-f64 test_spheres(u32 num_threads) {
-	f64 fov = 20.0;
-	f64 aperture = 0.1;
-	f64 aspect_ratio = 16.0 / 9.0;
+f32 test_spheres(u32 num_threads) {
+	f32 fov = 20.0;
+	f32 aperture = 0.1;
+	f32 aspect_ratio = 16.0 / 9.0;
 	u32 pixel_height = 216;
 	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
 	Point3D origin = {-2.0, 2.0, 1.0};
 	Point3D target = {0.0, 0.0, -1.0};
 	Vec3D normal = origin - target;
-	f64 focal_distance = l2_norm(&normal);
+	f32 focal_distance = l2_norm(&normal);
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
@@ -91,7 +91,7 @@ f64 test_spheres(u32 num_threads) {
 	world.traceables = traceables;
 	printf("[info] total traceables: %d\n", world.num_traceables);
 	printf("[info] total materials: %d\n", world.num_materials);
-	f64 ray_count = render(
+	f32 ray_count = render(
 		&world,
 		&camera,
 		image_plane.rows,
@@ -104,16 +104,16 @@ f64 test_spheres(u32 num_threads) {
 	return ray_count;
 }
 
-f64 random_spheres(u32 num_threads) {
-	f64 fov = 20.0;
-	f64 aperture = 0.1;
-	f64 aspect_ratio = (16.0 / 9.0);
+f32 random_spheres(u32 num_threads) {
+	f32 fov = 20.0;
+	f32 aperture = 0.1;
+	f32 aspect_ratio = (16.0 / 9.0);
 	u32 pixel_height = 216;
 	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
 	Point3D origin = {13.0, 2.0, 3.0};
 	Point3D target = {0.0, 0.0, 0.0};
 	Vec3D normal = origin - target;
-	f64 focal_distance = 10.0;
+	f32 focal_distance = 10.0;
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
@@ -140,10 +140,10 @@ f64 random_spheres(u32 num_threads) {
 	world.num_traceables++;
 	for (i32 i = -11; i < 11; i++) {
 		for (i32 j = -11; j < 11; j++) {
-			f64 material_check = unit_uniform();
-			f64 x = (f64) i + (0.9 * unit_uniform());
-			f64 y = 0.2;
-			f64 z = (f64) j + (0.9 * unit_uniform());
+			f32 material_check = unit_uniform();
+			f32 x = (f32) i + (0.9 * unit_uniform());
+			f32 y = 0.2;
+			f32 z = (f32) j + (0.9 * unit_uniform());
 			Point3D position = {x, y, z};
 			Point3D target = {4.0, 0.2, 0.0};
 			Point3D distance = position - target;
@@ -166,7 +166,7 @@ f64 random_spheres(u32 num_threads) {
 				} else if (material_check < 0.95) {
 					// make fuzzy reflective sphere
 					RGBA random_color = random_opaque_color(0.5, 1.0);
-					f64 scatter_index = unit_uniform();
+					f32 scatter_index = unit_uniform();
 					material = {
 					.color = random_color,
 					.scatter_index = scatter_index,
@@ -240,7 +240,7 @@ f64 random_spheres(u32 num_threads) {
 	world.num_traceables++;
 	printf("[info] total traceables: %d\n", world.num_traceables);
 	printf("[info] total materials: %d\n", world.num_materials);
-	f64 ray_count = render(
+	f32 ray_count = render(
 		&world,
 		&camera,
 		image_plane.rows,
@@ -253,16 +253,16 @@ f64 random_spheres(u32 num_threads) {
 	return ray_count;
 }
 
-f64 aras_9spheres(u32 num_threads) {
-	f64 fov = 60.0;
-	f64 aperture = 0.1;
-	f64 aspect_ratio = (16.0 / 9.0);
+f32 aras_9spheres(u32 num_threads) {
+	f32 fov = 60.0;
+	f32 aperture = 0.1;
+	f32 aspect_ratio = (16.0 / 9.0);
 	u32 pixel_height = 720;
 	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
 	Point3D origin = {0.0, 2.0, 3.0};
 	Point3D target = {0.0, 0.0, 0.0};
 	Vec3D normal = origin - target;
-	f64 focal_distance = 3.0;
+	f32 focal_distance = 3.0;
 	normal = normalize(&normal);
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
@@ -385,7 +385,7 @@ f64 aras_9spheres(u32 num_threads) {
 	world.traceables = traceables;
 	printf("[info] total traceables: %d\n", world.num_traceables);
 	printf("[info] total materials: %d\n", world.num_materials);
-	f64 ray_count = render(
+	f32 ray_count = render(
 		&world,
 		&camera,
 		image_plane.rows,
@@ -402,15 +402,15 @@ int main(int argc, char **args) {
 	u32 num_threads = core_count() - 1;
 	// seed xor_shift64
 	for (u32 i = 0; i < 25; i++) {
-		f64 random = uniform(0, 1);
+		f32 random = uniform(0, 1);
 	}
-	f64 sc = tick();
-	f64 ray_count = aras_9spheres(num_threads);
-	// f64 ray_count = random_spheres(num_threads);
-	// f64 ray_count = test_spheres(num_threads);
+	f32 sc = tick();
+	f32 ray_count = aras_9spheres(num_threads);
+	// f32 ray_count = random_spheres(num_threads);
+	// f32 ray_count = test_spheres(num_threads);
 	printf("Processed %llu rays\n", (u64) ray_count);
-	f64 ec = tick();
-	f64 dc = ec - sc;
+	f32 ec = tick();
+	f32 dc = ec - sc;
 	printf("[info] scene rendered in %.2f seconds on %d threads\n", dc, num_threads + 1);
 	printf("[info] rendered %.2f Mrays/s\n", (ray_count / 1.0e6) / dc);
 	printf("[info] ray timing: %.10f ms/ray \n", (dc * 1000.0) / ray_count);

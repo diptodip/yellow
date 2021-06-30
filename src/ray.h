@@ -135,7 +135,7 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 inline Intersection find_intersection(Ray *ray, World *world) {
 	Intersection intersection = {};
 	u32 num_traceables = world->num_traceables;
-	f64 nearest_distance = (f64) UINT32_MAX;
+	f64 nearest_distance = (f64) UINT64_MAX;
 	for (u32 i = 0; i < num_traceables; i++) {
 		Traceable *traceable = &world->traceables[i];
 		IntersectionResult result;

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "linalg.h"
 #include "colors.h"
+//TODO(dd): rearrange these structs for SIMD
 
 struct Material {
 	RGBA color;

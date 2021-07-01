@@ -4,14 +4,20 @@ Weekend](https://raytracing.github.io/) series. None of this is good
 programming -- it's mostly a learning exercise for different ways to speed up a
 program.
 
-![720p sphere render](/img/preview.bmp)
+![preview image of spheres](/img/preview.bmp)
 
-## Features
-* *Very* simple code
-* No scene configuration, you can only write a new function and recompile the
-whole program
-* Multithreaded ray tracing with either POSIX threads or Windows threading
-* Probably way slower than it could/should be
+## Description
+* *Very* simple raytracing implementation
+* No configuration or command line options, you can only write a new function
+  or change existing variables in the code and recompile the whole thing
+* Multithreaded ray tracing with either POSIX threads or Windows threads
+* Almost definitely way slower than it could/should be
+
+## Build Requirements
+I know that this build works using `clang` to compile, as used in the build
+scripts. If you want to use a different compiler, `gcc` might also work.
+Currently, I don't think `msvc` will work because I'm trying out using a
+compiler extension for locked adds.
 
 ## Usage
 There are no arguments. Just run

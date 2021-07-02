@@ -105,6 +105,7 @@ f32 test_spheres(u32 num_threads) {
 }
 
 f32 random_spheres(u32 num_threads) {
+	PRNGState prng_state = {134123};
 	f32 fov = 20.0;
 	f32 aperture = 0.1;
 	f32 aspect_ratio = (16.0 / 9.0);
@@ -140,10 +141,10 @@ f32 random_spheres(u32 num_threads) {
 	world.num_traceables++;
 	for (i32 i = -11; i < 11; i++) {
 		for (i32 j = -11; j < 11; j++) {
-			f32 material_check = unit_uniform();
-			f32 x = (f32) i + (0.9 * unit_uniform());
+			f32 material_check = unit_uniform(&prng_state);
+			f32 x = (f32) i + (0.9 * unit_uniform(&prng_state));
 			f32 y = 0.2;
-			f32 z = (f32) j + (0.9 * unit_uniform());
+			f32 z = (f32) j + (0.9 * unit_uniform(&prng_state));
 			Point3D position = {x, y, z};
 			Point3D target = {4.0, 0.2, 0.0};
 			Point3D distance = position - target;
@@ -153,7 +154,7 @@ f32 random_spheres(u32 num_threads) {
 				Traceable traceable;
 				if (material_check < 0.8) {
 					// make diffuse sphere
-					RGBA random_color = random_opaque_color();
+					RGBA random_color = random_opaque_color(&prng_state);
 					material = {
 					.color = random_color,
 					.scatter_index = 1.0,
@@ -165,8 +166,8 @@ f32 random_spheres(u32 num_threads) {
 					};
 				} else if (material_check < 0.95) {
 					// make fuzzy reflective sphere
-					RGBA random_color = random_opaque_color(0.5, 1.0);
-					f32 scatter_index = unit_uniform();
+					RGBA random_color = random_opaque_color(&prng_state, 0.5, 1.0);
+					f32 scatter_index = unit_uniform(&prng_state);
 					material = {
 					.color = random_color,
 					.scatter_index = scatter_index,
@@ -400,10 +401,6 @@ f32 aras_9spheres(u32 num_threads) {
 
 int main(int argc, char **args) {
 	u32 num_threads = core_count() - 1;
-	// seed xor_shift64
-	for (u32 i = 0; i < 25; i++) {
-		f32 random = uniform(0, 1);
-	}
 	f32 sc = tick();
 	f32 ray_count = aras_9spheres(num_threads);
 	// f32 ray_count = random_spheres(num_threads);

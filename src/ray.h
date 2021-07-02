@@ -19,10 +19,10 @@ inline Point3D ray_at(Ray *ray, f32 t) {
 	return ray->origin + (t * ray->direction);
 }
 
-inline Ray diffuse_bounce(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
+inline Ray diffuse_bounce(PRNGState *prng_state, Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
-	Vec3D random_direction = normal + random_unit_vector();
+	Vec3D random_direction = normal + random_unit_vector(prng_state);
 	return (Ray) {off, random_direction};
 }
 
@@ -34,12 +34,12 @@ inline Ray reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer) {
 	return (Ray) {off, reflected};
 }
 
-inline Ray fuzzy_reflect(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f32 scatter_index) {
+inline Ray fuzzy_reflect(PRNGState *prng_state, Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, f32 scatter_index) {
 	Vec3D direction = ray->direction;
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
 	Vec3D reflected = direction - (2 * dot(&direction, &normal) * normal);
-	Vec3D fuzzy_reflected = reflected + (scatter_index * random_unit_vector());
+	Vec3D fuzzy_reflected = reflected + (scatter_index * random_unit_vector(prng_state));
 	return (Ray) {off, fuzzy_reflected};
 }
 
@@ -49,7 +49,7 @@ inline f32 schlick(f32 cos_theta, f32 refraction_ratio) {
 	return r0 + (1.0 - r0) * std::pow((1.0 - cos_theta), 5.0);
 }
 
-inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f32 refractive_index) {
+inline Ray refract(PRNGState *prng_state, Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool inside, f32 refractive_index) {
 	Vec3D normal = *normal_pointer;
 	Point3D off = *off_pointer;
 	f32 refraction_ratio = inside ? refractive_index : (1.0 / refractive_index);
@@ -62,7 +62,7 @@ inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool i
 		return reflect(ray, normal_pointer, off_pointer);
 	}
 	f32 reflectivity = schlick(cos_theta, refraction_ratio);
-	f32 reflect_check = unit_uniform();
+	f32 reflect_check = unit_uniform(prng_state);
 	if (reflect_check < reflectivity) {
 		return reflect(ray, normal_pointer, off_pointer);
 	}
@@ -72,13 +72,13 @@ inline Ray refract(Ray *ray, Vec3D *normal_pointer, Point3D *off_pointer, bool i
 	return (Ray) {off, refracted};
 }
 
-inline Ray scatter(Ray *ray, Vec3D *normal, Point3D *off, f32 scatter_index) {
+inline Ray scatter(PRNGState *prng_state, Ray *ray, Vec3D *normal, Point3D *off, f32 scatter_index) {
 	if (scatter_index == 1.0) {
-		return diffuse_bounce(ray, normal, off);
+		return diffuse_bounce(prng_state, ray, normal, off);
 	} else if (scatter_index == 0.0) {
 		return reflect(ray, normal, off);
 	} else {
-		return fuzzy_reflect(ray, normal, off, scatter_index);
+		return fuzzy_reflect(prng_state, ray, normal, off, scatter_index);
 	}
 }
 
@@ -157,12 +157,12 @@ inline Intersection find_intersection(Ray *ray, World *world) {
 	return intersection;
 }
 
-inline Ray prime_ray(Camera *camera, f32 row_frac, f32 col_frac) {
+inline Ray prime_ray(PRNGState *prng_state, Camera *camera, f32 row_frac, f32 col_frac) {
 	Vec3D basis1 = cross(&camera->up, &camera->normal);
 	basis1 = normalize(&basis1);
 	Vec3D basis2 = cross(&camera->normal, &basis1);
 	f32 lens_radius = camera->aperture / 2.0;
-	Vec3D random_lens_offset = lens_radius * random_unit_vector();
+	Vec3D random_lens_offset = lens_radius * random_unit_vector(prng_state);
 	random_lens_offset = (basis1 * random_lens_offset.x) + (basis2 * random_lens_offset.y);
 	Point3D top_left = (camera->origin
 		- (camera->focal_distance * camera->image_plane.width * basis1 / 2.0)
@@ -176,7 +176,7 @@ inline Ray prime_ray(Camera *camera, f32 row_frac, f32 col_frac) {
 	return (Ray) {camera->origin + random_lens_offset, direction};
 }
 
-inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) {
+inline RGBA trace(PRNGState *prng_state, Ray *ray, World *world, RenderQueue *render_queue, u32 depth) {
 	sync_fetch_and_add(&render_queue->ray_count, 1);
 	if (depth <= 0) {
 		// light enters the void if we hit the depth limit
@@ -198,11 +198,11 @@ inline RGBA trace(Ray *ray, World *world, RenderQueue *render_queue, u32 depth) 
 	bool inside = intersection.inside;
 	RGBA color = material.color;
 	if (material.refractive_index > 0.0) {
-		Ray refracted = refract(ray, &normal, &intersection_point, inside, material.refractive_index);
-		color *= trace(&refracted, world, render_queue, depth - 1);
+		Ray refracted = refract(prng_state, ray, &normal, &intersection_point, inside, material.refractive_index);
+		color *= trace(prng_state, &refracted, world, render_queue, depth - 1);
 	} else {
-		Ray scattered = scatter(ray, &normal, &intersection_point, material.scatter_index);
-		color *= trace(&scattered, world, render_queue, depth - 1);
+		Ray scattered = scatter(prng_state, ray, &normal, &intersection_point, material.scatter_index);
+		color *= trace(prng_state, &scattered, world, render_queue, depth - 1);
 	}
 	return color;
 }
@@ -213,6 +213,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 		return false;
 	}
 	RenderJob *render_job = render_queue->jobs + job_index;
+	PRNGState *prng_state = &render_job->prng_state;
 	World *world = render_job->world;
 	Camera *camera = render_job->camera;
 	u32 rows = render_job->rows;
@@ -229,12 +230,12 @@ inline b8 render_tile(RenderQueue *render_queue) {
 		for (u32 j = col_min; j < col_max; j++) {
 			RGBA color = {0.0, 0.0, 0.0, 1.0};
 			for (u32 s = 0; s < num_samples; s++) {
-				f32 row_rand = unit_uniform();
-				f32 col_rand = unit_uniform();
+				f32 row_rand = unit_uniform(prng_state);
+				f32 col_rand = unit_uniform(prng_state);
 				f32 u = ((f32) i + 0.5 + row_rand) / ((f32) rows);
 				f32 v = ((f32) j + 0.5 + col_rand) / ((f32) cols);
-				Ray ray = prime_ray(camera, u, v);
-				color += trace(&ray, world, render_queue, 50);
+				Ray ray = prime_ray(prng_state, camera, u, v);
+				color += trace(prng_state, &ray, world, render_queue, 50);
 			}
 			color = color / (f32) num_samples;
 			u32 color_u32 = rgba_to_u32(&color);
@@ -283,6 +284,7 @@ inline f32 render(
 				col_max = cols;
 			}
 			RenderJob *render_job = render_queue.jobs + render_queue.num_tiles++;
+			render_job->prng_state = (PRNGState) {i * 1989 + j * 3141 + 1};
 			render_job->world = world;
 			render_job->camera = camera;
 			render_job->rows = rows;

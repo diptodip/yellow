@@ -75,7 +75,7 @@ inline f32 tick() {
 #endif //_WIN32
 
 // Increment value with a lock and return the previous value
-u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
+inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
 	// NOTE(dd): we're using a gcc/clang compiler extension to do this
 	// because mutexes and InterlockedExchangeAdd were for some reason
 	// slower
@@ -83,6 +83,7 @@ u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
 }
 
 struct RenderJob {
+	PRNGState prng_state;
 	World *world;
 	Camera *camera;
 	u32 rows;

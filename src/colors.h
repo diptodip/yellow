@@ -11,7 +11,7 @@ struct RGBA {
 	f32 a;
 };
 
-f32 clamp_color_component(f32 c, f32 min, f32 max) {
+inline f32 clamp_color_component(f32 c, f32 min, f32 max) {
 	if (c < min) {
 		return min;
 	}
@@ -21,7 +21,7 @@ f32 clamp_color_component(f32 c, f32 min, f32 max) {
 	return c;
 }
 
-RGBA max_normalize(RGBA *a) {
+inline RGBA max_normalize(RGBA *a) {
 	f32 max = 0.0;
 	if (a->r > max) {
 		max = a->r;
@@ -36,40 +36,40 @@ RGBA max_normalize(RGBA *a) {
 }
 
 // binary rgba ops
-RGBA operator*(const RGBA& a, const RGBA& b) {
+inline RGBA operator*(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a};
 }
 
-RGBA operator*(const f32 b, const RGBA& a) {
+inline RGBA operator*(const f32 b, const RGBA& a) {
 	return (RGBA) {a.r * b, a.g * b, a.b * b, a.a * b};
 }
 
-RGBA operator*(const RGBA& a, const f32 b) {
+inline RGBA operator*(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r * b, a.g * b, a.b * b, a.a * b};
 }
 
-RGBA operator/(const RGBA& a, const RGBA& b) {
+inline RGBA operator/(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r / b.r, a.g / b.g, a.b / b.b, a.a / b.a};
 }
 
-RGBA operator/(const RGBA& a, const f32 b) {
+inline RGBA operator/(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r / b, a.g / b, a.b / b, a.a / b};
 }
 
-RGBA operator+(const RGBA& a, const RGBA& b) {
+inline RGBA operator+(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a};
 }
 
-RGBA operator+(const f32 b, const RGBA& a) {
+inline RGBA operator+(const f32 b, const RGBA& a) {
 	return (RGBA) {a.r + b, a.g + b, a.b + b, a.a + b};
 }
 
-RGBA operator+(const RGBA& a, const f32 b) {
+inline RGBA operator+(const RGBA& a, const f32 b) {
 	return (RGBA) {a.r + b, a.g + b, a.b + b, a.a + b};
 }
 
 // in-place binary rgba ops
-RGBA& operator*=(RGBA& a, const RGBA& b) {
+inline RGBA& operator*=(RGBA& a, const RGBA& b) {
 	RGBA c = {};
 	a.r *= b.r;
 	a.g *= b.g;
@@ -78,7 +78,7 @@ RGBA& operator*=(RGBA& a, const RGBA& b) {
 	return a;
 }
 
-RGBA& operator+=(RGBA& a, const RGBA& b) {
+inline RGBA& operator+=(RGBA& a, const RGBA& b) {
 	a.r += b.r;
 	a.g += b.g;
 	a.b += b.b;
@@ -86,21 +86,21 @@ RGBA& operator+=(RGBA& a, const RGBA& b) {
 	return a;
 }
 
-RGBA random_opaque_color() {
-	f32 r = unit_uniform();
-	f32 g = unit_uniform();
-	f32 b = unit_uniform();
+inline RGBA random_opaque_color(PRNGState *prng_state) {
+	f32 r = unit_uniform(prng_state);
+	f32 g = unit_uniform(prng_state);
+	f32 b = unit_uniform(prng_state);
 	return (RGBA) {r, g, b, 1.0};
 }
 
-RGBA random_opaque_color(f32 min, f32 max) {
-	f32 r = uniform(min, max);
-	f32 g = uniform(min, max);
-	f32 b = uniform(min, max);
+inline RGBA random_opaque_color(PRNGState *prng_state, f32 min, f32 max) {
+	f32 r = uniform(prng_state, min, max);
+	f32 g = uniform(prng_state, min, max);
+	f32 b = uniform(prng_state, min, max);
 	return (RGBA) {r, g, b, 1.0};
 }
 
-u32 rgba_to_u32(RGBA *color) {
+inline u32 rgba_to_u32(RGBA *color) {
 	f32 cap = 256;
 	u32 r = (u8) (clamp_color_component(std::sqrt(color->r), 0.0, 0.999) * cap);
 	u32 g = (u8) (clamp_color_component(std::sqrt(color->g), 0.0, 0.999) * cap);

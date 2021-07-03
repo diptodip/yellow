@@ -14,26 +14,13 @@ struct Material {
 struct Sphere {
 	Point3D origin;
 	f32 radius;
-};
-
-union TraceableObject {
-	Sphere s;
-};
-
-enum TraceableType {
-	SphereT
-};
-
-struct Traceable {
-	TraceableType type;
-	TraceableObject object;
 	u32 material_index;
 };
 
 struct World {
 	u32 num_materials;
-	u32 num_traceables;
+	u32 num_spheres;
 	Material *materials;
-	Traceable *traceables;
+	Sphere *spheres;
 };
 #endif //YELLOW_MATERIALS

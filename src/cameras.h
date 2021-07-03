@@ -27,7 +27,7 @@ struct Camera {
 	f32 focal_distance;
 };
 
-ImagePlane create_image_plane(f32 fov, f32 aspect_ratio, u32 pixel_height) {
+inline ImagePlane create_image_plane(f32 fov, f32 aspect_ratio, u32 pixel_height) {
 	ImagePlane image_plane = {};
 	f32 fov_radians = fov * (M_PI / 180.0);
 	image_plane.fov = fov;
@@ -40,7 +40,7 @@ ImagePlane create_image_plane(f32 fov, f32 aspect_ratio, u32 pixel_height) {
 	return image_plane;
 }
 
-u32* imalloc(size_t rows, size_t cols) {
+inline u32* imalloc(size_t rows, size_t cols) {
 	return (u32*) malloc(sizeof(u32) * rows * cols);
 }
 #endif //YELLOW_CAMERAS

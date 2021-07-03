@@ -87,7 +87,7 @@ struct Intersection {
 	Vec3D normal;
 	b8 inside;
 	b8 intersected;
-	Traceable *traceable;
+	u32 material_index;
 };
 
 struct IntersectionResult {
@@ -134,24 +134,20 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 
 inline Intersection find_intersection(Ray *ray, World *world) {
 	Intersection intersection = {};
-	u32 num_traceables = world->num_traceables;
+	u32 num_spheres = world->num_spheres;
 	f32 nearest_distance = (f32) UINT32_MAX;
-	for (u32 i = 0; i < num_traceables; i++) {
-		Traceable *traceable = &world->traceables[i];
+	for (u32 i = 0; i < num_spheres; i++) {
+		// TODO(dd): handle other geometries
+		Sphere *sphere = &world->spheres[i];
 		IntersectionResult result;
-		// TODO(dd): handle other traceable types
-		switch (traceable->type) {
-			case SphereT:
-				result = intersect_sphere(ray, (Sphere *) &traceable->object);
-				break;
-		}
+		result = intersect_sphere(ray, sphere);
 		if (result.intersected && (result.distance < nearest_distance)) {
 			nearest_distance = result.distance;
 			intersection.origin = result.origin;
 			intersection.normal = result.normal;
 			intersection.inside = result.inside;
 			intersection.intersected = true;
-			intersection.traceable = traceable;
+			intersection.material_index = sphere->material_index;
 		}
 	}
 	return intersection;
@@ -191,8 +187,7 @@ inline RGBA trace(PRNGState *prng_state, Ray *ray, World *world, RenderQueue *re
 		RGBA bg_color = {1.0f - (0.5f * height), 1.0f - (0.3f * height), 1.0f, 1.0f};
 		return bg_color;
 	}
-	Traceable *traceable = intersection.traceable;
-	Material material = world->materials[traceable->material_index];
+	Material material = world->materials[intersection.material_index];
 	Point3D intersection_point = intersection.origin;
 	Vec3D normal = intersection.normal;
 	bool inside = intersection.inside;

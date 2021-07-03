@@ -9,7 +9,7 @@
 #include "threads.h"
 #include "rand.h"
 
-f32 test_spheres(u32 num_threads) {
+inline f32 test_spheres(u32 num_threads) {
 	f32 fov = 20.0;
 	f32 aperture = 0.1;
 	f32 aspect_ratio = 16.0 / 9.0;
@@ -54,42 +54,42 @@ f32 test_spheres(u32 num_threads) {
 	Sphere s1 = {
 		.origin = (Point3D) {0.0, -100.5, -1.0},
 		.radius = 100.0,
+		.material_index = 0
 	};
 	Sphere s2 = {
 		.origin = (Point3D) {0.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 1
 	};
 	Sphere s3 = {
 		.origin = (Point3D) {1.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 2
 	};
 	Sphere s4 = {
 		.origin = (Point3D) {-1.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 3
 	};
 	Sphere s5 = {
 		.origin = (Point3D) {-1.0, 0.0, -1.0},
 		.radius = -0.45,
+		.material_index = 4
 	};
-	Traceable ground_sphere = {SphereT, s1, 0};
-	Traceable red_sphere = {SphereT, s2, 1};
-	Traceable metal_sphere = {SphereT, s3, 2};
-	Traceable glass_sphere = {SphereT, s4, 3};
-	Traceable glass_sphere_inside = {SphereT, s5, 4};
 	Material materials[5] = {m1, m2, m3, m4, m5};
-	Traceable traceables[5] = {
-		ground_sphere,
-		red_sphere,
-		metal_sphere,
-		glass_sphere,
-		glass_sphere_inside
+	Sphere spheres[5] = {
+		s1,
+		s2,
+		s3,
+		s4,
+		s5
 	};
 	World world = {};
 	world.num_materials = 5;
-	world.num_traceables = 5;
+	world.num_spheres = 5;
 	world.materials = materials;
-	world.traceables = traceables;
-	printf("[info] total traceables: %d\n", world.num_traceables);
+	world.spheres = spheres;
+	printf("[info] total spheres: %d\n", world.num_spheres);
 	printf("[info] total materials: %d\n", world.num_materials);
 	f32 ray_count = render(
 		&world,
@@ -104,7 +104,7 @@ f32 test_spheres(u32 num_threads) {
 	return ray_count;
 }
 
-f32 random_spheres(u32 num_threads) {
+inline f32 random_spheres(u32 num_threads) {
 	PRNGState prng_state = {134123};
 	f32 fov = 20.0;
 	f32 aperture = 0.1;
@@ -119,26 +119,26 @@ f32 random_spheres(u32 num_threads) {
 	Vec3D up = {0.0, 1.0, 0.0};
 	Camera camera = {origin, normal, up, image_plane, aperture, focal_distance};
 	Material materials[488];
-	Traceable traceables[488];
+	Sphere spheres[488];
 	World world = {};
 	world.num_materials = 0;
-	world.num_traceables = 0;
+	world.num_spheres = 0;
 	world.materials = materials;
-	world.traceables = traceables;
+	world.spheres = spheres;
 	static Material ground_material = {
 		.color = (RGBA) {0.5, 0.5, 0.5, 1.0},
 		.scatter_index = 1.0,
-		.refractive_index = 0.0,
+		.refractive_index = 0.0
 	};
 	Sphere ground_sphere = {
 		.origin = (Point3D) {0.0, -1000.0, 0.0},
 		.radius = 1000.0,
+		.material_index = world.num_materials
 	};
-	Traceable ground = {SphereT, ground_sphere, world.num_materials};
 	world.materials[world.num_materials] = ground_material;
-	world.traceables[world.num_traceables] = ground;
+	world.spheres[world.num_spheres] = ground_sphere;
 	world.num_materials++;
-	world.num_traceables++;
+	world.num_spheres++;
 	for (i32 i = -11; i < 11; i++) {
 		for (i32 j = -11; j < 11; j++) {
 			f32 material_check = unit_uniform(&prng_state);
@@ -151,49 +151,40 @@ f32 random_spheres(u32 num_threads) {
 			if (l2_norm(&distance) > 0.9) {
 				Material material;
 				Sphere sphere;
-				Traceable traceable;
 				if (material_check < 0.8) {
 					// make diffuse sphere
 					RGBA random_color = random_opaque_color(&prng_state);
 					material = {
-					.color = random_color,
-					.scatter_index = 1.0,
-					.refractive_index = 0.0,
-					};
-					sphere = {
-					.origin = position,
-					.radius = y,
+						.color = random_color,
+						.scatter_index = 1.0,
+						.refractive_index = 0.0
 					};
 				} else if (material_check < 0.95) {
 					// make fuzzy reflective sphere
 					RGBA random_color = random_opaque_color(&prng_state, 0.5, 1.0);
 					f32 scatter_index = unit_uniform(&prng_state);
 					material = {
-					.color = random_color,
-					.scatter_index = scatter_index,
-					.refractive_index = 0.0,
-					};
-					sphere = {
-					.origin = position,
-					.radius = y,
+						.color = random_color,
+						.scatter_index = scatter_index,
+						.refractive_index = 0.0
 					};
 				} else {
 					// make refractive sphere
 					material = {
-					.color = (RGBA) {1.0, 1.0, 1.0, 1.0},
-					.scatter_index = 0.0,
-					.refractive_index = 1.5,
-					};
-					sphere = {
-					.origin = position,
-					.radius = y,
+						.color = (RGBA) {1.0, 1.0, 1.0, 1.0},
+						.scatter_index = 0.0,
+						.refractive_index = 1.5
 					};
 				}
-				traceable = {SphereT, sphere, world.num_materials};
+				sphere = {
+					.origin = position,
+					.radius = y,
+					.material_index = world.num_materials
+				};
 				world.materials[world.num_materials] = material;
-				world.traceables[world.num_traceables] = traceable;
+				world.spheres[world.num_spheres] = sphere;
 				world.num_materials++;
-				world.num_traceables++;
+				world.num_spheres++;
 			}
 		}
 	}
@@ -205,12 +196,12 @@ f32 random_spheres(u32 num_threads) {
 	Sphere big_glass_sphere {
 		.origin = (Point3D) {0.0, 1.0, 0.0},
 		.radius = 1.0,
+		.material_index = world.num_materials
 	};
-	Traceable big_glass_traceable = {SphereT, big_glass_sphere, world.num_materials};
 	world.materials[world.num_materials] = big_glass_material;
-	world.traceables[world.num_traceables] = big_glass_traceable;
+	world.spheres[world.num_spheres] = big_glass_sphere;
 	world.num_materials++;
-	world.num_traceables++;
+	world.num_spheres++;
 	Material big_diffuse_material = {
 		.color = (RGBA) {0.4, 0.2, 0.1, 1.0},
 		.scatter_index = 1.0,
@@ -219,12 +210,12 @@ f32 random_spheres(u32 num_threads) {
 	Sphere big_diffuse_sphere {
 		.origin = (Point3D) {-4.0, 1.0, 0.0},
 		.radius = 1.0,
+		.material_index = world.num_materials
 	};
-	Traceable big_diffuse_traceable = {SphereT, big_diffuse_sphere, world.num_materials};
 	world.materials[world.num_materials] = big_diffuse_material;
-	world.traceables[world.num_traceables] = big_diffuse_traceable;
+	world.spheres[world.num_spheres] = big_diffuse_sphere;
 	world.num_materials++;
-	world.num_traceables++;
+	world.num_spheres++;
 	Material big_reflective_material = {
 		.color = (RGBA) {0.7, 0.6, 0.5, 1.0},
 		.scatter_index = 0.0,
@@ -233,13 +224,13 @@ f32 random_spheres(u32 num_threads) {
 	Sphere big_reflective_sphere {
 		.origin = (Point3D) {4.0, 1.0, 0.0},
 		.radius = 1.0,
+		.material_index = world.num_materials
 	};
-	Traceable big_reflective_traceable = {SphereT, big_reflective_sphere, world.num_materials};
 	world.materials[world.num_materials] = big_reflective_material;
-	world.traceables[world.num_traceables] = big_reflective_traceable;
+	world.spheres[world.num_spheres] = big_reflective_sphere;
 	world.num_materials++;
-	world.num_traceables++;
-	printf("[info] total traceables: %d\n", world.num_traceables);
+	world.num_spheres++;
+	printf("[info] total spheres: %d\n", world.num_spheres);
 	printf("[info] total materials: %d\n", world.num_materials);
 	f32 ray_count = render(
 		&world,
@@ -254,7 +245,7 @@ f32 random_spheres(u32 num_threads) {
 	return ray_count;
 }
 
-f32 aras_9spheres(u32 num_threads) {
+inline f32 aras_9spheres(u32 num_threads) {
 	f32 fov = 60.0;
 	f32 aperture = 0.1;
 	f32 aspect_ratio = (16.0 / 9.0);
@@ -315,48 +306,48 @@ f32 aras_9spheres(u32 num_threads) {
 	Sphere s1 = {
 		.origin = (Point3D) {0.0, -100.5, -1.0},
 		.radius = 100.0,
+		.material_index = 0
 	};
 	Sphere s2 = {
 		.origin = (Point3D) {2.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 1
 	};
 	Sphere s3 = {
 		.origin = (Point3D) {0.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 2
 	};
 	Sphere s4 = {
 		.origin = (Point3D) {-2.0, 0.0, -1.0},
 		.radius = 0.5,
+		.material_index = 3
 	};
 	Sphere s5 = {
 		.origin = (Point3D) {2.0, 0.0, 1.0},
 		.radius = 0.5,
+		.material_index = 4
 	};
 	Sphere s6 = {
 		.origin = (Point3D) {0.0, 0.0, 1.0},
 		.radius = 0.5,
+		.material_index = 5
 	};
 	Sphere s7 = {
 		.origin = (Point3D) {-2.0, 0.0, 1.0},
 		.radius = 0.5,
+		.material_index = 6
 	};
 	Sphere s8 = {
 		.origin = (Point3D) {0.5, 1.0, 0.5},
 		.radius = 0.5,
+		.material_index = 7
 	};
 	Sphere s9 = {
 		.origin = (Point3D) {-1.5, 1.5, 0.0},
 		.radius = 0.3,
+		.material_index = 8
 	};
-	Traceable t1 = {SphereT, s1, 0};
-	Traceable t2 = {SphereT, s2, 1};
-	Traceable t3 = {SphereT, s3, 2};
-	Traceable t4 = {SphereT, s4, 3};
-	Traceable t5 = {SphereT, s5, 4};
-	Traceable t6 = {SphereT, s6, 5};
-	Traceable t7 = {SphereT, s7, 6};
-	Traceable t8 = {SphereT, s8, 7};
-	Traceable t9 = {SphereT, s9, 8};
 	Material materials[9] = {
 		m1,
 		m2,
@@ -368,23 +359,23 @@ f32 aras_9spheres(u32 num_threads) {
 		m8,
 		m9,
 	};
-	Traceable traceables[9] = {
-		t1,
-		t2,
-		t3,
-		t4,
-		t5,
-		t6,
-		t7,
-		t8,
-		t9,
+	Sphere spheres[9] = {
+		s1,
+		s2,
+		s3,
+		s4,
+		s5,
+		s6,
+		s7,
+		s8,
+		s9,
 	};
 	World world = {};
 	world.num_materials = 9;
-	world.num_traceables = 9;
+	world.num_spheres = 9;
 	world.materials = materials;
-	world.traceables = traceables;
-	printf("[info] total traceables: %d\n", world.num_traceables);
+	world.spheres = spheres;
+	printf("[info] total spheres: %d\n", world.num_spheres);
 	printf("[info] total materials: %d\n", world.num_materials);
 	f32 ray_count = render(
 		&world,

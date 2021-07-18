@@ -296,7 +296,9 @@ inline f32 render(
 				col_max = cols;
 			}
 			RenderJob *render_job = render_queue.jobs + render_queue.num_tiles++;
-			render_job->prng_state = (PRNGState) {i * 1989 + j * 3141 + 1};
+			// TODO(dd): use a source of entropy instead of deterministic seeds
+			render_job->prng_state = (PRNGState) {read_entropy()};
+			render_job->background = background;
 			render_job->world = world;
 			render_job->camera = camera;
 			render_job->rows = rows;

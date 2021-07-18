@@ -102,10 +102,10 @@ inline RGBA random_opaque_color(PRNGState *prng_state, f32 min, f32 max) {
 
 inline u32 rgba_to_u32(RGBA *color) {
 	f32 cap = 256;
-	u32 r = (u8) (clamp_color_component(std::sqrt(color->r), 0.0, 0.999) * cap);
-	u32 g = (u8) (clamp_color_component(std::sqrt(color->g), 0.0, 0.999) * cap);
-	u32 b = (u8) (clamp_color_component(std::sqrt(color->b), 0.0, 0.999) * cap);
-	u32 a = (u8) (clamp_color_component(std::sqrt(color->a), 0.0, 0.999) * cap);
+	u32 r = (u8) (clamp_color_component(sqrt(color->r), 0.0, 0.999) * cap);
+	u32 g = (u8) (clamp_color_component(sqrt(color->g), 0.0, 0.999) * cap);
+	u32 b = (u8) (clamp_color_component(sqrt(color->b), 0.0, 0.999) * cap);
+	u32 a = (u8) (clamp_color_component(sqrt(color->a), 0.0, 0.999) * cap);
 	u32 hex = 0;
 	hex |= (a << 24);
 	hex |= (b << 16);

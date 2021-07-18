@@ -7,6 +7,7 @@
 
 struct Material {
 	RGBA color;
+	RGBA emit;
 	f32 scatter_index;
 	f32 refractive_index;
 };

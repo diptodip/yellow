@@ -1,6 +1,30 @@
 #ifndef YELLOW_RAND
 #define YELLOW_RAND
 #include "types.h"
+#include <cstdio>
+
+#ifdef _WIN32 //WINDOWS
+#include <windows.h>
+#include <bcrypt.h>
+inline u32 read_entropy() {
+	u32 entropy;
+	NTSTATUS result = BCryptGenRandom(NULL, (PUCHAR) &entropy, 4, 0);
+	if (entropy < 1) {
+		entropy += 1;
+	}
+	return entropy;
+}
+#else //UNIX
+#include <bsd/stdlib.h>
+inline u32 read_entropy() {
+	u32 entropy;
+	arc4random_buf((void *) &entropy, 4);
+	if (entropy < 1) {
+		entropy += 1;
+	}
+	return entropy;
+}
+#endif //_WIN32
 
 struct PRNGState {
 	u32 entropy;

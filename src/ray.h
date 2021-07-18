@@ -184,8 +184,16 @@ inline Ray prime_ray(PRNGState *prng_state, Camera *camera, f32 row_frac, f32 co
 	return (Ray) {camera->origin + random_lens_offset, direction};
 }
 
-inline RGBA trace(PRNGState *prng_state, RGBA *background, Ray *ray, World *world, RenderQueue *render_queue, u32 depth) {
-	sync_fetch_and_add(&render_queue->ray_count, 1);
+inline RGBA trace(
+	PRNGState *prng_state,
+	RGBA *background,
+	Ray *ray,
+	World *world,
+	RenderQueue *render_queue,
+	u32 *num_traced_rays,
+	u32 depth
+) {
+	*num_traced_rays += 1;
 	if (depth <= 0) {
 		// light enters the void if we hit the depth limit
 		return (RGBA) {0.0, 0.0, 0.0, 1.0};
@@ -202,10 +210,10 @@ inline RGBA trace(PRNGState *prng_state, RGBA *background, Ray *ray, World *worl
 	RGBA emit = material.emit;
 	if (material.refractive_index > 0.0) {
 		Ray refracted = refract(prng_state, ray, &normal, &intersection_point, inside, material.refractive_index);
-		color *= trace(prng_state, background, &refracted, world, render_queue, depth - 1);
+		color *= trace(prng_state, background, &refracted, world, render_queue, num_traced_rays, depth - 1);
 	} else {
 		Ray scattered = scatter(prng_state, ray, &normal, &intersection_point, material.scatter_index);
-		color *= trace(prng_state, background, &scattered, world, render_queue, depth - 1);
+		color *= trace(prng_state, background, &scattered, world, render_queue, num_traced_rays, depth - 1);
 	}
 	return emit + color;
 }
@@ -230,6 +238,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 	u32 *out = render_job->out;
 	u32 tile_rows = row_max - row_min;
 	u32 tile_cols = col_max - col_min;
+	u32 num_traced_rays = 0;
 	for (u32 i = row_min; i < row_max; i++) {
 		for (u32 j = col_min; j < col_max; j++) {
 			RGBA color = {0.0, 0.0, 0.0, 1.0};
@@ -245,6 +254,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 					&ray,
 					world,
 					render_queue,
+					&num_traced_rays,
 					50
 				);
 			}
@@ -253,6 +263,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 			out[i * cols + j] = color_u32;
 		}
 	}
+	sync_fetch_and_add(&render_queue->ray_count, num_traced_rays);
 	sync_fetch_and_add(&render_queue->tile_rendered_count, 1);
 	return true;
 }

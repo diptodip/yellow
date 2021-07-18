@@ -5,6 +5,10 @@
 #include "types.h"
 #include "rand.h"
 
+inline f32 y_fabs(f32 x) {
+	return (x < 0) ? -x : x;
+}
+
 struct Vec3D {
 	f32 x;
 	f32 y;
@@ -87,7 +91,7 @@ inline f32 l2_norm_squared(Vec3D *a) {
 }
 
 inline f32 l2_norm(Vec3D *a) {
-	return std::sqrt(l2_norm_squared(a));
+	return sqrt(l2_norm_squared(a));
 }
 
 inline Vec3D normalize(Vec3D *a) {
@@ -101,12 +105,7 @@ inline Vec3D random_direction_in_ranges(PRNGState *prng_state, f32 x1, f32 x2, f
 }
 
 inline Vec3D random_unit_vector(PRNGState *prng_state) {
-	f32 l2_squared = 2.0;
-	Vec3D direction;
-	while (l2_squared > 1.0) {
-		direction = random_direction_in_ranges(prng_state, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-		l2_squared = l2_norm_squared(&direction);
-	}
+	Vec3D direction = random_direction_in_ranges(prng_state, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 	direction = normalize(&direction);
 	return direction;
 }

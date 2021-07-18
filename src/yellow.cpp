@@ -503,7 +503,7 @@ inline f32 caseym_5spheres(u32 num_threads) {
 		image_plane.cols,
 		64,
 		64,
-		256,
+		1024,
 		num_threads
 	);
 	return ray_count;

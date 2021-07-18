@@ -27,6 +27,11 @@ inline void join_thread(ThreadHandle thread) {
 	CloseHandle(thread);
 }
 
+// Increment value with a lock and return the previous value
+inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
+	return InterlockedExchangeAdd64((volatile i64 *) x, by);
+}
+
 inline f32 tick() {
 	LARGE_INTEGER current_ticks;
 	LARGE_INTEGER tick_frequency;
@@ -64,6 +69,13 @@ inline void join_thread(ThreadHandle thread) {
 	pthread_join(thread, NULL);
 }
 
+// Increment value with a lock and return the previous value
+inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
+	// NOTE(dd): we're using a gcc/clang compiler extension to do this
+	// because mutexes were for some reason slower
+	return __sync_fetch_and_add(x, by);
+}
+
 inline f32 tick() {
 	struct timespec ts;
 	u32 res = clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -74,16 +86,9 @@ inline f32 tick() {
 }
 #endif //_WIN32
 
-// Increment value with a lock and return the previous value
-inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
-	// NOTE(dd): we're using a gcc/clang compiler extension to do this
-	// because mutexes and InterlockedExchangeAdd were for some reason
-	// slower
-	return __sync_fetch_and_add(x, by);
-}
-
 struct RenderJob {
 	PRNGState prng_state;
+	RGBA *background;
 	World *world;
 	Camera *camera;
 	u32 rows;

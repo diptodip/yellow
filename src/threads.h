@@ -98,6 +98,7 @@ struct RenderJob {
 	u32 col_min;
 	u32 col_max;
 	u32 num_samples;
+	u32 max_depth;
 	u32 *out;
 };
 

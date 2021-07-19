@@ -235,6 +235,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 	u32 col_min = render_job->col_min;
 	u32 col_max = render_job->col_max;
 	u32 num_samples = render_job->num_samples;
+	u32 max_depth = render_job->max_depth;
 	u32 *out = render_job->out;
 	u32 tile_rows = row_max - row_min;
 	u32 tile_cols = col_max - col_min;
@@ -255,7 +256,7 @@ inline b8 render_tile(RenderQueue *render_queue) {
 					world,
 					render_queue,
 					&num_traced_rays,
-					50
+					max_depth
 				);
 			}
 			color = color / (f32) num_samples;
@@ -284,6 +285,7 @@ inline f32 render(
 	u32 tile_rows,
 	u32 tile_cols,
 	u32 num_samples,
+	u32 max_depth,
 	u32 num_threads
 ) {
 	u32 *image = imalloc(rows, cols);
@@ -319,6 +321,7 @@ inline f32 render(
 			render_job->col_min = col_min;
 			render_job->col_max = col_max;
 			render_job->num_samples = num_samples;
+			render_job->max_depth = max_depth;
 			render_job->out = out;
 		}
 	}

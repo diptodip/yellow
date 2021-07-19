@@ -15,10 +15,10 @@ inline u32 read_entropy() {
 	return entropy;
 }
 #else //UNIX
-#include <bsd/stdlib.h>
+#include <unistd.h>
 inline u32 read_entropy() {
 	u32 entropy;
-	arc4random_buf((void *) &entropy, 4);
+	getentropy((void *) &entropy, 4);
 	if (entropy < 1) {
 		entropy += 1;
 	}

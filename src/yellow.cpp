@@ -101,6 +101,7 @@ inline f32 test_spheres(u32 num_threads) {
 		32,
 		32,
 		100,
+		50,
 		num_threads
 	);
 	return ray_count;
@@ -244,6 +245,7 @@ inline f32 random_spheres(u32 num_threads) {
 		32,
 		32,
 		100,
+		50,
 		num_threads
 	);
 	return ray_count;
@@ -391,7 +393,8 @@ inline f32 arasp_9spheres(u32 num_threads) {
 		image_plane.cols,
 		64,
 		64,
-		1000,
+		1024,
+		50,
 		num_threads
 	);
 	return ray_count;
@@ -504,6 +507,7 @@ inline f32 caseym_5spheres(u32 num_threads) {
 		64,
 		64,
 		1024,
+		8,
 		num_threads
 	);
 	return ray_count;

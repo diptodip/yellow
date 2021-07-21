@@ -515,16 +515,9 @@ inline f32 caseym_5spheres(u32 num_threads) {
 
 int main(int argc, char **args) {
 	u32 num_threads = core_count() - 1;
-	f32 sc = tick();
 	f32 ray_count = caseym_5spheres(num_threads);
 	// f32 ray_count = arasp_9spheres(num_threads);
 	// f32 ray_count = random_spheres(num_threads);
 	// f32 ray_count = test_spheres(num_threads);
-	printf("Processed %llu rays\n", (u64) ray_count);
-	f32 ec = tick();
-	f32 dc = ec - sc;
-	printf("[info] scene rendered in %.2f seconds on %d threads\n", dc, num_threads + 1);
-	printf("[info] rendered %.2f Mrays/s\n", (ray_count / 1.0e6) / dc);
-	printf("[info] ray timing: %.10f ms/ray \n", (dc * 1000.0) / ray_count);
 	return 0;
 }

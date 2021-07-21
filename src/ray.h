@@ -325,6 +325,7 @@ inline f32 render(
 		}
 	}
 	sync_fetch_and_add(&render_queue.next_job_index, 0);
+	f32 sc = tick();
 	ThreadHandle threads[num_threads];
 	for (u32 i = 0; i < num_threads; i++) {
 		ThreadHandle thread = create_thread(render_thread, (void *) &render_queue);
@@ -339,7 +340,13 @@ inline f32 render(
 	for (u32 i = num_threads - 1; i > 0; i--) {
 		join_thread(threads[i]);
 	}
+	f32 ec = tick();
+	f32 dc = ec - sc;
 	f32 ray_count = (f32) render_queue.ray_count;
+	printf("[info] processed %llu rays\n", (u64) ray_count);
+	printf("[info] scene rendered in %.2f seconds on %d threads\n", dc, num_threads + 1);
+	printf("[info] rendered %.2f Mrays/s\n", (ray_count / 1.0e6) / dc);
+	printf("[info] ray timing: %.10f ms/ray \n", (dc * 1000.0) / ray_count);
 	printf("[info] writing image...\n");
 	stbi_write_bmp("image.bmp", cols, rows, 4, image);
 	printf("[ok] done!\n");

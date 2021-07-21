@@ -193,29 +193,28 @@ inline RGBA trace(
 	u32 *num_traced_rays,
 	u32 depth
 ) {
-	*num_traced_rays += 1;
-	if (depth <= 0) {
-		// light enters the void if we hit the depth limit
-		return (RGBA) {0.0, 0.0, 0.0, 1.0};
+	RGBA color = {0.0, 0.0, 0.0, 1.0};
+	RGBA attenuation = {1.0, 1.0, 1.0, 1.0};
+	for (u32 d = 0; d < depth; d++) {
+		*num_traced_rays += 1;
+		Intersection intersection = find_intersection(ray, world);
+		if (!intersection.intersected) {
+			color += attenuation * *background;
+			break;
+		}
+		Material material = world->materials[intersection.material_index];
+		Point3D intersection_point = intersection.origin;
+		Vec3D normal = intersection.normal;
+		bool inside = intersection.inside;
+		color += attenuation * material.emit;
+		attenuation *= material.color;
+		if (material.refractive_index > 0.0) {
+			*ray = refract(prng_state, ray, &normal, &intersection_point, inside, material.refractive_index);
+		} else {
+			*ray = scatter(prng_state, ray, &normal, &intersection_point, material.scatter_index);
+		}
 	}
-	Intersection intersection = find_intersection(ray, world);
-	if (!intersection.intersected) {
-		return *background;
-	}
-	Material material = world->materials[intersection.material_index];
-	Point3D intersection_point = intersection.origin;
-	Vec3D normal = intersection.normal;
-	bool inside = intersection.inside;
-	RGBA color = material.color;
-	RGBA emit = material.emit;
-	if (material.refractive_index > 0.0) {
-		Ray refracted = refract(prng_state, ray, &normal, &intersection_point, inside, material.refractive_index);
-		color *= trace(prng_state, background, &refracted, world, render_queue, num_traced_rays, depth - 1);
-	} else {
-		Ray scattered = scatter(prng_state, ray, &normal, &intersection_point, material.scatter_index);
-		color *= trace(prng_state, background, &scattered, world, render_queue, num_traced_rays, depth - 1);
-	}
-	return emit + color;
+	return color;
 }
 
 inline b8 render_tile(RenderQueue *render_queue) {

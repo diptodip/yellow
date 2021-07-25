@@ -35,6 +35,24 @@ inline RGBA max_normalize(RGBA *a) {
 	return (RGBA) {a->r / max, a->g / max, a->b / max, a->a};
 }
 
+inline f32 linear_to_srgb(f32 l) {
+	l = clamp_color_component(l, 0.0, 1.0);
+	f32 s = l * 12.92;
+	if (l > 0.0031308) {
+		s = 1.055 * powf(l, 1.0 / 2.4) - 0.055;
+	}
+	return s;
+}
+
+inline RGBA linear_to_srgb(RGBA *linear) {
+	RGBA srgb = {};
+	srgb.r = linear_to_srgb(linear->r);
+	srgb.g = linear_to_srgb(linear->g);
+	srgb.b = linear_to_srgb(linear->b);
+	srgb.a = linear->a;
+	return srgb;
+}
+
 // binary rgba ops
 inline RGBA operator*(const RGBA& a, const RGBA& b) {
 	return (RGBA) {a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a};
@@ -102,10 +120,11 @@ inline RGBA random_opaque_color(PRNGState *prng_state, f32 min, f32 max) {
 
 inline u32 rgba_to_u32(RGBA *color) {
 	f32 cap = 256;
-	u32 r = (u8) (clamp_color_component(sqrt(color->r), 0.0, 0.999) * cap);
-	u32 g = (u8) (clamp_color_component(sqrt(color->g), 0.0, 0.999) * cap);
-	u32 b = (u8) (clamp_color_component(sqrt(color->b), 0.0, 0.999) * cap);
-	u32 a = (u8) (clamp_color_component(sqrt(color->a), 0.0, 0.999) * cap);
+	RGBA srgb = linear_to_srgb(color);
+	u32 r = (u8) (clamp_color_component(srgb.r, 0.0, 0.999) * cap);
+	u32 g = (u8) (clamp_color_component(srgb.g, 0.0, 0.999) * cap);
+	u32 b = (u8) (clamp_color_component(srgb.b, 0.0, 0.999) * cap);
+	u32 a = (u8) (clamp_color_component(srgb.a, 0.0, 0.999) * cap);
 	u32 hex = 0;
 	hex |= (a << 24);
 	hex |= (b << 16);

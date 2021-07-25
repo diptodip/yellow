@@ -33,8 +33,8 @@ struct PRNGState {
 inline u32 xor_shift32(PRNGState *prng_state) {
 	u32 x = prng_state->entropy;
 	x ^= x << 13;
-	x ^= x >> 7;
-	x ^= x << 17;
+	x ^= x >> 17;
+	x ^= x << 5;
 	if (x < 1) {
 		x += 2;
 	}

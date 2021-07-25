@@ -445,9 +445,9 @@ inline f32 caseym_5spheres(u32 num_threads) {
 		.scatter_index = 0.0,
 		.refractive_index = 0.0,
 	};
-	Sphere s1 = {
-		.origin = (Point3D) {0.0, -1.0e3, -1.0},
-		.radius = 1.0e3,
+	Plane p1 = {
+		.normal = (Vec3D) {0.0, -1.0, 0.0},
+		.distance = 0.0,
 		.material_index = 0
 	};
 	Sphere s2 = {
@@ -483,20 +483,25 @@ inline f32 caseym_5spheres(u32 num_threads) {
 		m5,
 		m6,
 	};
-	Sphere spheres[6] = {
-		s1,
+	Sphere spheres[5] = {
 		s2,
 		s3,
 		s4,
 		s5,
 		s6,
 	};
+	Plane planes[1] = {
+		p1,
+	};
 	World world = {};
 	world.num_materials = 6;
-	world.num_spheres = 6;
+	world.num_spheres = 5;
+	world.num_planes = 1;
 	world.materials = materials;
 	world.spheres = spheres;
+	world.planes = planes;
 	printf("[info] total spheres: %d\n", world.num_spheres);
+	printf("[info] total planes: %d\n", world.num_planes);
 	printf("[info] total materials: %d\n", world.num_materials);
 	f32 ray_count = render(
 		&world,

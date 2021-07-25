@@ -109,10 +109,11 @@ inline f32 test_spheres(u32 num_threads) {
 
 inline f32 random_spheres(u32 num_threads) {
 	PRNGState prng_state = {read_entropy()};
+	warm_up_xor_shift(&prng_state);
 	f32 fov = 20.0;
 	f32 aperture = 0.1;
 	f32 aspect_ratio = (16.0 / 9.0);
-	u32 pixel_height = 216;
+	u32 pixel_height = 360;
 	ImagePlane image_plane = create_image_plane(fov, aspect_ratio, pixel_height);
 	Point3D origin = {13.0, 2.0, 3.0};
 	Point3D target = {0.0, 0.0, 0.0};

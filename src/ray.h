@@ -344,8 +344,9 @@ inline f32 render(
 				col_max = cols;
 			}
 			RenderJob *render_job = render_queue.jobs + render_queue.num_tiles++;
-			// TODO(dd): use a source of entropy instead of deterministic seeds
-			render_job->prng_state = (PRNGState) {read_entropy()};
+			PRNGState prng_state = {read_entropy()};
+			warm_up_xor_shift(&prng_state);
+			render_job->prng_state = prng_state;
 			render_job->background = background;
 			render_job->world = world;
 			render_job->camera = camera;
@@ -360,6 +361,7 @@ inline f32 render(
 			render_job->out = out;
 		}
 	}
+	// memory fence here, before we modify this from threads
 	sync_fetch_and_add(&render_queue.next_job_index, 0);
 	f32 sc = tick();
 	ThreadHandle threads[num_threads];

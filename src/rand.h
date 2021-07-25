@@ -10,7 +10,7 @@ inline u32 read_entropy() {
 	u32 entropy;
 	NTSTATUS result = BCryptGenRandom(NULL, (PUCHAR) &entropy, 4, 0);
 	if (entropy < 1) {
-		entropy += 1;
+		entropy += 2;
 	}
 	return entropy;
 }
@@ -20,7 +20,7 @@ inline u32 read_entropy() {
 	u32 entropy;
 	getentropy((void *) &entropy, 4);
 	if (entropy < 1) {
-		entropy += 1;
+		entropy += 2;
 	}
 	return entropy;
 }
@@ -35,8 +35,17 @@ inline u32 xor_shift32(PRNGState *prng_state) {
 	x ^= x << 13;
 	x ^= x >> 7;
 	x ^= x << 17;
+	if (x < 1) {
+		x += 2;
+	}
 	prng_state->entropy = x;
 	return x;
+}
+
+inline void warm_up_xor_shift(PRNGState *prng_state) {
+	for (u32 i = 0; i < 11; i++) {
+		prng_state->entropy = xor_shift32(prng_state);
+	}
 }
 
 inline f32 unit_uniform(PRNGState *prng_state) {

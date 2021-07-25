@@ -5,10 +5,6 @@
 #include "types.h"
 #include "rand.h"
 
-inline f32 y_fabs(f32 x) {
-	return (x < 0) ? -x : x;
-}
-
 struct Vec3D {
 	f32 x;
 	f32 y;
@@ -104,8 +100,21 @@ inline Vec3D random_direction_in_ranges(PRNGState *prng_state, f32 x1, f32 x2, f
 	return (Vec3D) {uniform(prng_state, x1, x2), uniform(prng_state, y1, y2), uniform(prng_state, z1, z2)};
 }
 
+inline Vec3D random_bilateral(PRNGState *prng_state) {
+	Vec3D direction = random_direction_in_ranges(
+		prng_state,
+		-1.0,
+		1.0,
+		-1.0,
+		1.0,
+		-1.0,
+		1.0
+	);
+	return direction;
+}
+
 inline Vec3D random_unit_vector(PRNGState *prng_state) {
-	Vec3D direction = random_direction_in_ranges(prng_state, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+	Vec3D direction = random_bilateral(prng_state);
 	direction = normalize(&direction);
 	return direction;
 }
@@ -114,7 +123,7 @@ inline Vec3D random_unit_sphere_vector(PRNGState *prng_state) {
 	f32 l2_squared = 2.0;
 	Vec3D direction;
 	while (l2_squared > 1.0) {
-		direction = random_direction_in_ranges(prng_state, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+		direction = random_bilateral(prng_state);
 		l2_squared = l2_norm_squared(&direction);
 	}
 	return direction;
@@ -124,7 +133,7 @@ inline Vec3D random_unit_disk_vector(PRNGState *prng_state) {
 	f32 l2_squared = 2.0;
 	Vec3D direction;
 	while (l2_squared > 1.0) {
-		direction = random_direction_in_ranges(prng_state, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+		direction = random_bilateral(prng_state);
 		l2_squared = l2_norm_squared(&direction);
 	}
 	return direction;

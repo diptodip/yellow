@@ -132,7 +132,6 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	result.intersected = true;
 	f32 t = (t0 >= 1e-4) ? t0 : t1;
 	Point3D intersection = ray_at(ray, t);
-	Vec3D distance_vec = intersection - ray->origin;
 	Vec3D normal = (intersection - sphere->origin) / sphere->radius;
 	if (dot(&normal, &ray->direction) > 0.0) {
 		result.inside = true;
@@ -140,7 +139,7 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	}
 	result.origin = intersection;
 	result.normal = normal;
-	result.distance = l2_norm(&distance_vec);
+	result.distance = t;
 	return result;
 }
 

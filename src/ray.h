@@ -143,12 +143,36 @@ inline IntersectionResult intersect_sphere(Ray *ray, Sphere *sphere) {
 	return result;
 }
 
+inline IntersectionResult intersect_plane(Ray *ray, Plane *plane) {
+	IntersectionResult result = {};
+	result.intersected = false;
+	Vec3D direction = ray->direction;
+	Vec3D normal = plane->normal;
+	f32 cos_theta = dot(&normal, &direction);
+	if ((cos_theta < -1e-3) > (cos_theta > 1e-3)) {
+		return result;
+	}
+	result.intersected = true;
+	result.inside = false;
+	Point3D origin = ray->origin;
+	f32 t = (-plane->distance - dot(&normal, &origin))/cos_theta;
+	Point3D intersection = ray_at(ray, t);
+	result.origin = intersection;
+	if (cos_theta > 0.0) {
+		result.normal = cos_theta > 0 ? -normal : normal;
+		result.inside = true;
+	}
+	result.distance = t;
+	return result;
+}
+
 inline Intersection find_intersection(Ray *ray, World *world) {
 	Intersection intersection = {};
 	u32 num_spheres = world->num_spheres;
+	u32 num_planes = world->num_planes;
 	f32 nearest_distance = (f32) UINT32_MAX;
+	// TODO(dd): try out unions with type enums again, measure perf
 	for (u32 i = 0; i < num_spheres; i++) {
-		// TODO(dd): handle other geometries
 		Sphere *sphere = &world->spheres[i];
 		IntersectionResult result;
 		result = intersect_sphere(ray, sphere);
@@ -159,6 +183,19 @@ inline Intersection find_intersection(Ray *ray, World *world) {
 			intersection.inside = result.inside;
 			intersection.intersected = true;
 			intersection.material_index = sphere->material_index;
+		}
+	}
+	for (u32 i = 0; i < num_planes; i++) {
+		Plane *plane = &world->planes[i];
+		IntersectionResult result;
+		result = intersect_plane(ray, plane);
+		if (result.intersected && (result.distance < nearest_distance)) {
+			nearest_distance = result.distance;
+			intersection.origin = result.origin;
+			intersection.normal = result.normal;
+			intersection.inside = result.inside;
+			intersection.intersected = true;
+			intersection.material_index = plane->material_index;
 		}
 	}
 	return intersection;

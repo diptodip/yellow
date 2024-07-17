@@ -32,7 +32,7 @@ inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
 	return InterlockedExchangeAdd64((volatile i64 *) x, by);
 }
 
-inline f32 tick() {
+inline f64 tick() {
 	LARGE_INTEGER current_ticks;
 	LARGE_INTEGER tick_frequency;
 	BOOL res = QueryPerformanceCounter(&current_ticks);
@@ -40,7 +40,7 @@ inline f32 tick() {
 		return 0;
 	}
 	res = QueryPerformanceFrequency(&tick_frequency);
-	return (f32) current_ticks.QuadPart / (f32) tick_frequency.QuadPart;
+	return (f64) current_ticks.QuadPart / (f64) tick_frequency.QuadPart;
 }
 #else // UNIX
 #include <pthread.h>
@@ -76,13 +76,14 @@ inline u64 sync_fetch_and_add(volatile u64 *x, u64 by) {
 	return __sync_fetch_and_add(x, by);
 }
 
-inline f32 tick() {
+inline f64 tick() {
 	struct timespec ts;
-	u32 res = clock_gettime(CLOCK_MONOTONIC, &ts);
+	i32 res = clock_gettime(CLOCK_MONOTONIC, &ts);
 	if (res == -1) {
 		return 0;
 	}
-	return ((f32) ((ts.tv_sec * 1e9) + ts.tv_nsec)) / (f32) 1.0e9;
+	f64 result = (f64) ts.tv_sec + (((f64) ts.tv_nsec) / 1.0e9);
+	return result;
 }
 #endif //_WIN32
 
